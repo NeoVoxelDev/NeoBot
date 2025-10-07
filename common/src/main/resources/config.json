@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "storage": {
+    "type": "h2",
+    "host": "127.0.0.1",
+    "port": 3306,
+    "username": "root",
+    "password": "passw0rd",
+    "database": "neobot",
+    "options": [
+      "useUnicode=true",
+      "characterEncoding=utf-8"
+    ],
+    "pool-settings": {
+      "maximum-pool-size": 50,
+      "minimum-idle": 10,
+      "maximum-lifetime": 1800000,
+      "keepalive-time": 0,
+      "connection-timeout": 5000
+    }
+  },
+  "bot": {
+    "type": "onebot11-ws",
+    "onebot11-ws": {
+      "url": "ws://127.0.0.1:3001",
+      "access-token": ""
+    },
+    "options": {
+      "check-interval": 30
+    }
+  }
+}
