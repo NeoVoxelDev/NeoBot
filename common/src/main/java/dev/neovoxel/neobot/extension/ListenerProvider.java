@@ -6,5 +6,7 @@ import org.pf4j.ExtensionPoint;
 
 public interface ListenerProvider extends ExtensionPoint {
     EventListener getListener(NeoBot plugin);
-    String getExtensionName();
+    default String getRequiredPlatform() {
+        return "Common";
+    }
 }

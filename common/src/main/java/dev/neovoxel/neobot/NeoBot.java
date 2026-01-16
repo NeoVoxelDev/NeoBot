@@ -37,7 +37,7 @@ public interface NeoBot extends ExtensionsProvider, ConfigProvider, GameProvider
             setBotProvider(botProvider);
             getBotProvider().loadBot(this);
             getNeoLogger().info("Loading extensions...");
-            initPluginsManager();
+            this.initExtensionsManager();
             loadExtensions(this);
             getNeoLogger().info("Loading script system...");
             submitAsync(() -> {
@@ -94,7 +94,7 @@ public interface NeoBot extends ExtensionsProvider, ConfigProvider, GameProvider
 
                 getNeoLogger().info("Reloading extensions...");
                 unloadExtensions();
-                initPluginsManager();
+                this.initExtensionsManager();
                 loadExtensions(this);
 
                 getScriptProvider().loadScript(this);
@@ -113,7 +113,7 @@ public interface NeoBot extends ExtensionsProvider, ConfigProvider, GameProvider
 
     File getDataFolder();
 
-    void initPluginsManager();
+    void initExtensionsManager();
 
     void setGameEventListener(GameEventListener listener);
 

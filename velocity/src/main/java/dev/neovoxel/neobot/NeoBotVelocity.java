@@ -107,8 +107,7 @@ public class NeoBotVelocity implements NeoBot {
         return dataDirectory.toFile();
     }
 
-    @Override
-    public void initPluginsManager() {
+    public void initExtensionsManager() {
         pluginsManager = new VelocityExtensionsManager();
     }
 

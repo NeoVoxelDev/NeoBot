@@ -14,6 +14,7 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class ExtensionsManager {
     PluginManager pluginManager;
@@ -38,7 +39,23 @@ public class ExtensionsManager {
         // 获取所有实现了 ListenerProvider 的扩展
         List<ListenerProvider> extensions = pluginManager.getExtensions(ListenerProvider.class);
         for (ListenerProvider ext : extensions) {
-            listenerMap.put(ext.getExtensionName(),ext.getListener(plugin));
+            org.pf4j.PluginWrapper wrapper = pluginManager.whichPlugin(ext.getClass());
+            if (wrapper == null){
+                continue;
+            }
+            org.pf4j.PluginDescriptor descriptor = wrapper.getDescriptor();
+            String pluginId = descriptor.getPluginId();
+            String version = descriptor.getVersion();
+            String provider = descriptor.getProvider();
+            if(!Objects.equals(ext.getRequiredPlatform(), "Common") && !Objects.equals(ext.getRequiredPlatform(), plugin.getPlatform())){
+                plugin.getNeoLogger().warn(String.format("扩展[%s]要求在[%s]上加载! 当前环境[%s]已自动跳过.",
+                        pluginId, ext.getRequiredPlatform(), plugin.getPlatform()));
+                continue;
+            }
+            plugin.getNeoLogger().info(String.format("加载扩展: %s | 版本: %s | 作者:%s ",
+                    pluginId, version, provider));
+
+            listenerMap.put(pluginId,ext.getListener(plugin));
         }
     }
 

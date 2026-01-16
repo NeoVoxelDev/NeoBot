@@ -40,7 +40,7 @@ public class NeoBotBukkit extends JavaPlugin implements NeoBot {
 
     @Getter
     @Setter
-    private BukkitExtensionsManager pluginsManager;
+    private BukkitExtensionsManager extensionsManager;
 
     @Getter(onMethod_ = {@HostAccess.Export})
     @Setter
@@ -75,9 +75,8 @@ public class NeoBotBukkit extends JavaPlugin implements NeoBot {
         return new BukkitLogger(getLogger());
     }
 
-    @Override
-    public void initPluginsManager() {
-        pluginsManager = new BukkitExtensionsManager();
+    public void initExtensionsManager() {
+        extensionsManager = new BukkitExtensionsManager();
     }
 
     @Override
@@ -88,17 +87,17 @@ public class NeoBotBukkit extends JavaPlugin implements NeoBot {
 
     @Override
     public Map<String, EventListener> getListenerMap(){
-        return pluginsManager.getListenerMap();
+        return extensionsManager.getListenerMap();
     }
 
     @Override
     public void loadExtensions(NeoBot plugin) {
-        pluginsManager.loadExtensions(plugin);
+        extensionsManager.loadExtensions(plugin);
     }
 
     @Override
     public void unloadExtensions() {
-        pluginsManager.unloadExtensions();
+        extensionsManager.unloadExtensions();
     }
 
 
