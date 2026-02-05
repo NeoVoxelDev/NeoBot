@@ -9,6 +9,7 @@ import dev.neovoxel.neobot.config.ConfigProvider;
 import dev.neovoxel.neobot.game.GameEventListener;
 import dev.neovoxel.neobot.game.GameProvider;
 import dev.neovoxel.neobot.library.LibraryProvider;
+import dev.neovoxel.neobot.extension.ExtensionsProvider;
 import dev.neovoxel.neobot.scheduler.SchedulerProvider;
 import dev.neovoxel.neobot.script.ScriptProvider;
 import dev.neovoxel.neobot.script.ScriptScheduler;
@@ -17,7 +18,7 @@ import org.graalvm.polyglot.HostAccess;
 
 import java.io.File;
 
-public interface NeoBot extends ConfigProvider, GameProvider, LibraryProvider, SchedulerProvider {
+public interface NeoBot extends ExtensionsProvider, ConfigProvider, GameProvider, LibraryProvider, SchedulerProvider {
     default void enable() {
         try {
             getNeoLogger().info("Loading libraries...");
@@ -35,6 +36,9 @@ public interface NeoBot extends ConfigProvider, GameProvider, LibraryProvider, S
             BotProvider botProvider = new BotProvider(this);
             setBotProvider(botProvider);
             getBotProvider().loadBot(this);
+            getNeoLogger().info("Loading extensions...");
+            this.initExtensionsManager();
+            loadExtensions(this);
             getNeoLogger().info("Loading script system...");
             submitAsync(() -> {
                 try {
@@ -61,6 +65,8 @@ public interface NeoBot extends ConfigProvider, GameProvider, LibraryProvider, S
         getScriptProvider().unloadScript();
         getBotProvider().getBotListener().reset();
         getGameEventListener().reset();
+        getNeoLogger().info("Unloading all extensions...");
+        unloadExtensions();
         getNeoLogger().info("Cancelling all the tasks...");
         cancelAllTasks();
         getScriptScheduler().clear();
@@ -85,6 +91,12 @@ public interface NeoBot extends ConfigProvider, GameProvider, LibraryProvider, S
                 getGameEventListener().reset();
                 getNeoLogger().info("Reloading scripts...");
                 getScriptProvider().unloadScript();
+
+                getNeoLogger().info("Reloading extensions...");
+                unloadExtensions();
+                this.initExtensionsManager();
+                loadExtensions(this);
+
                 getScriptProvider().loadScript(this);
                 getGameEventListener().onPluginReloaded();
             } catch (Throwable e) {
@@ -100,6 +112,8 @@ public interface NeoBot extends ConfigProvider, GameProvider, LibraryProvider, S
     NeoLogger getNeoLogger();
 
     File getDataFolder();
+
+    void initExtensionsManager();
 
     void setGameEventListener(GameEventListener listener);
 

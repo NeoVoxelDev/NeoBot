@@ -2,6 +2,7 @@ package dev.neovoxel.neobot.script;
 
 import dev.neovoxel.jarflow.JarFlow;
 import dev.neovoxel.neobot.NeoBot;
+import dev.neovoxel.neobot.misc.EventListener;
 import dev.neovoxel.neobot.util.ValueWithScript;
 import dev.neovoxel.neobot.util.http.HttpBuilder;
 import dev.neovoxel.neobot.util.ws.ExternalWSUtil;
@@ -247,6 +248,10 @@ public class ScriptProvider {
         context.getBindings("js").putMember("qq", plugin.getBotProvider().getBotListener());
         context.getBindings("js").putMember("plugin", plugin);
         context.getBindings("js").putMember("gameEvent", plugin.getGameEventListener());
+        for(Map.Entry<String, EventListener> entry : plugin.getListenerMap().entrySet()){
+            context.getBindings("js").putMember(entry.getKey(), entry.getValue());
+//            System.out.println(entry.getKey());
+        }
         context.getBindings("js").putMember("gameCommand", plugin.getCommandProvider());
         context.getBindings("js").putMember("messageConfig", plugin.getMessageConfig());
         context.getBindings("js").putMember("generalConfig", plugin.getScriptConfig());

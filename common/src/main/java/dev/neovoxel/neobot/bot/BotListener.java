@@ -13,6 +13,7 @@ import dev.neovoxel.nbapi.event.request.GroupRequestType;
 import dev.neovoxel.nbapi.listener.NBotEventHandler;
 import dev.neovoxel.nbapi.listener.NBotListener;
 import dev.neovoxel.neobot.NeoBot;
+import dev.neovoxel.neobot.misc.EventListener;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Value;
 import org.json.JSONArray;
@@ -22,39 +23,24 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-public class BotListener implements NBotListener {
-    private final NeoBot plugin;
-
-    private final Map<Value, String> map = new LinkedHashMap<>();
+public class BotListener extends EventListener implements NBotListener {
     
     public BotListener(NeoBot plugin) {
-        this.plugin = plugin;
+        super(plugin);
     }
 
     @HostAccess.Export
     public void sendGroupMessage(long groupId, String message) {
-        plugin.getBotProvider().getBot().forEach(client -> {
+        getPlugin().getBotProvider().getBot().forEach(client -> {
             if (client.isConnected()) {
                 client.action(new SendGroupMessage(groupId, new JSONArray(message)));
             }
         });
     }
 
-    public void clearUuidContext(String uuid) {
-        List<Value> toRemove = new ArrayList<>();
-        for (Map.Entry<Value, String> entry : map.entrySet()) {
-            if (entry.getKey().getContext().getBindings("js").getMember("__uuid__").asString().equals(uuid)) {
-                toRemove.add(entry.getKey());
-            }
-        }
-        for (Value value : toRemove) {
-            map.remove(value);
-        }
-    }
-
     @HostAccess.Export
     public void sendPrivateMessage(long userId, String message) {
-        plugin.getBotProvider().getBot().forEach(client -> {
+        getPlugin().getBotProvider().getBot().forEach(client -> {
             if (client.isConnected()) {
                 client.action(new SendPrivateMessage(userId, new JSONArray(message)));
             }
@@ -63,7 +49,7 @@ public class BotListener implements NBotListener {
 
     @HostAccess.Export
     public void renameGroupMember(long groupId, long userId, String name) {
-        plugin.getBotProvider().getBot().forEach(client -> {
+        getPlugin().getBotProvider().getBot().forEach(client -> {
             if (client.isConnected()) {
                 client.action(new SetGroupCard(groupId, userId, name));
             }
@@ -72,7 +58,7 @@ public class BotListener implements NBotListener {
 
     @HostAccess.Export
     public void muteGroupMember(long groupId, long userId, int duration) {
-        plugin.getBotProvider().getBot().forEach(client -> {
+        getPlugin().getBotProvider().getBot().forEach(client -> {
             if (client.isConnected()) {
                 client.action(new SetGroupBan(groupId, userId, duration));
             }
@@ -81,7 +67,7 @@ public class BotListener implements NBotListener {
 
     @HostAccess.Export
     public void muteAllGroupMember(long groupId) {
-        plugin.getBotProvider().getBot().forEach(client -> {
+        getPlugin().getBotProvider().getBot().forEach(client -> {
             if (client.isConnected()) {
                 client.action(new SetGroupWholeBan(groupId, true));
             }
@@ -90,7 +76,7 @@ public class BotListener implements NBotListener {
 
     @HostAccess.Export
     public void unMuteAllGroupMember(long groupId) {
-        plugin.getBotProvider().getBot().forEach(client -> {
+        getPlugin().getBotProvider().getBot().forEach(client -> {
             if (client.isConnected()) {
                 client.action(new SetGroupWholeBan(groupId, false));
             }
@@ -99,7 +85,7 @@ public class BotListener implements NBotListener {
 
     @HostAccess.Export
     public void kickGroupMember(long groupId, long userId) {
-        plugin.getBotProvider().getBot().forEach(client -> {
+        getPlugin().getBotProvider().getBot().forEach(client -> {
             if (client.isConnected()) {
                 client.action(new SetGroupKick(groupId, userId));
             }
@@ -108,7 +94,7 @@ public class BotListener implements NBotListener {
 
     @HostAccess.Export
     public void approveGroupRequest(String flag, String type) {
-        plugin.getBotProvider().getBot().forEach(client -> {
+        getPlugin().getBotProvider().getBot().forEach(client -> {
             if (client.isConnected()) {
                 client.action(new SetGroupAddRequest(flag, GroupRequestType.from(type)));
             }
@@ -117,7 +103,7 @@ public class BotListener implements NBotListener {
 
     @HostAccess.Export
     public void rejectGroupRequest(String flag, String type) {
-        plugin.getBotProvider().getBot().forEach(client -> {
+        getPlugin().getBotProvider().getBot().forEach(client -> {
             if (client.isConnected()) {
                 client.action(new SetGroupAddRequest(flag, GroupRequestType.from(type), false));
             }
@@ -126,7 +112,7 @@ public class BotListener implements NBotListener {
 
     @HostAccess.Export
     public void approveFriendRequest(String flag) {
-        plugin.getBotProvider().getBot().forEach(client -> {
+        getPlugin().getBotProvider().getBot().forEach(client -> {
             if (client.isConnected()) {
                 client.action(new SetFriendAddRequest(flag));
             }
@@ -135,7 +121,7 @@ public class BotListener implements NBotListener {
 
     @HostAccess.Export
     public void rejectFriendRequest(String flag) {
-        plugin.getBotProvider().getBot().forEach(client -> {
+        getPlugin().getBotProvider().getBot().forEach(client -> {
             if (client.isConnected()) {
                 client.action(new SetFriendAddRequest(flag, false));
             }
@@ -144,7 +130,7 @@ public class BotListener implements NBotListener {
 
     @HostAccess.Export
     public void setGroupSpecialTitle(long groupId, long userId, String title, long duration) {
-        plugin.getBotProvider().getBot().forEach(client -> {
+        getPlugin().getBotProvider().getBot().forEach(client -> {
             if (client.isConnected()) {
                 client.action(new SetGroupSpecialTitle(groupId, userId, title, duration));
             }
@@ -153,7 +139,7 @@ public class BotListener implements NBotListener {
 
     @HostAccess.Export
     public void setGroupWholeBan(long groupId, boolean enable) {
-        plugin.getBotProvider().getBot().forEach(client -> {
+        getPlugin().getBotProvider().getBot().forEach(client -> {
             if (client.isConnected()) {
                 client.action(new SetGroupWholeBan(groupId, enable));
             }
@@ -162,7 +148,7 @@ public class BotListener implements NBotListener {
 
     @HostAccess.Export
     public void recallMessage(long messageId) {
-        plugin.getBotProvider().getBot().forEach(client -> {
+        getPlugin().getBotProvider().getBot().forEach(client -> {
             if (client.isConnected()) {
                 client.action(new DeleteMessage(messageId));
             }
@@ -172,7 +158,7 @@ public class BotListener implements NBotListener {
     @HostAccess.Export
     public void getGroupMemberInfo(long groupId, long userId, Value method) {
         if (method.canExecute()) {
-            plugin.getBotProvider().getBot().forEach(client -> {
+            getPlugin().getBotProvider().getBot().forEach(client -> {
                 if (client.isConnected()) {
                     client.action(new GetGroupMemberInfo(groupId, userId), method::execute);
                 } else {
@@ -185,7 +171,7 @@ public class BotListener implements NBotListener {
     @HostAccess.Export
     public void getGroupMemberList(long groupId, Value method) {
         if (method.canExecute()) {
-            plugin.getBotProvider().getBot().forEach(client -> {
+            getPlugin().getBotProvider().getBot().forEach(client -> {
                 if (client.isConnected()) {
                     client.action(new GetGroupMemberList(groupId), method::execute);
                 } else method.execute(new ArrayList<>());
@@ -196,7 +182,7 @@ public class BotListener implements NBotListener {
     @HostAccess.Export
     public void getFriendList(Value method) {
         if (method.canExecute()) {
-            plugin.getBotProvider().getBot().forEach(client -> {
+            getPlugin().getBotProvider().getBot().forEach(client -> {
                 if (client.isConnected()) {
                     client.action(new GetFriendList(), method::execute);
                 } else method.execute(new ArrayList<>());
@@ -207,7 +193,7 @@ public class BotListener implements NBotListener {
     @HostAccess.Export
     public void getGroupList(Value method) {
         if (method.canExecute()) {
-            plugin.getBotProvider().getBot().forEach(client -> {
+            getPlugin().getBotProvider().getBot().forEach(client -> {
                 if (client.isConnected()) {
                     client.action(new GetGroupList(), method::execute);
                 } else method.execute(new ArrayList<>());
@@ -218,28 +204,11 @@ public class BotListener implements NBotListener {
     @HostAccess.Export
     public void getGroupInfo(long groupId, Value method) {
         if (method.canExecute()) {
-            plugin.getBotProvider().getBot().forEach(client -> {
+            getPlugin().getBotProvider().getBot().forEach(client -> {
                 if (client.isConnected()) {
                     client.action(new GetGroupInfo(groupId), method::execute);
                 } else method.execute(new ArrayList<>());
             });
-        }
-    }
-
-    @HostAccess.Export
-    public void register(String eventName, Value method) {
-        if (method.canExecute()) map.put(method, eventName);
-    }
-
-    public void reset() {
-        map.clear();
-    }
-
-    private void fireEvent(String eventName, NEvent event) {
-        for (Map.Entry<Value, String> entry : map.entrySet()) {
-            if (entry.getValue().equals(eventName)) {
-                entry.getKey().execute(event);
-            }
         }
     }
     

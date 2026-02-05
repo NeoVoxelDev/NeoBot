@@ -11,6 +11,8 @@ import dev.neovoxel.neobot.config.EnhancedConfig;
 import dev.neovoxel.neobot.config.ScriptConfig;
 import dev.neovoxel.neobot.event.BukkitEventManager;
 import dev.neovoxel.neobot.game.GameEventListener;
+import dev.neovoxel.neobot.misc.EventListener;
+import dev.neovoxel.neobot.extension.BukkitExtensionsManager;
 import dev.neovoxel.neobot.scheduler.ScheduledTask;
 import dev.neovoxel.neobot.script.ScriptProvider;
 import dev.neovoxel.neobot.script.ScriptScheduler;
@@ -24,6 +26,7 @@ import org.graalvm.polyglot.HostAccess;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 public class NeoBotBukkit extends JavaPlugin implements NeoBot {
@@ -34,6 +37,10 @@ public class NeoBotBukkit extends JavaPlugin implements NeoBot {
 
     @Setter
     private ScriptProvider scriptProvider;
+
+    @Getter
+    @Setter
+    private BukkitExtensionsManager extensionsManager;
 
     @Getter(onMethod_ = {@HostAccess.Export})
     @Setter
@@ -68,11 +75,31 @@ public class NeoBotBukkit extends JavaPlugin implements NeoBot {
         return new BukkitLogger(getLogger());
     }
 
+    public void initExtensionsManager() {
+        extensionsManager = new BukkitExtensionsManager();
+    }
+
     @Override
     public void setGameEventListener(GameEventListener listener) {
         Bukkit.getPluginManager().registerEvents(new BukkitEventManager(this), this);
         this.gameEventListener = listener;
     }
+
+    @Override
+    public Map<String, EventListener> getListenerMap(){
+        return extensionsManager.getListenerMap();
+    }
+
+    @Override
+    public void loadExtensions(NeoBot plugin) {
+        extensionsManager.loadExtensions(plugin);
+    }
+
+    @Override
+    public void unloadExtensions() {
+        extensionsManager.unloadExtensions();
+    }
+
 
     @Override
     public ScheduledTask submit(Runnable task) {

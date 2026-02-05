@@ -4,53 +4,13 @@ import dev.neovoxel.neobot.NeoBot;
 import dev.neovoxel.neobot.game.event.ChatEvent;
 import dev.neovoxel.neobot.game.event.DeathEvent;
 import dev.neovoxel.neobot.game.event.LoginEvent;
-import dev.neovoxel.neobot.adapter.Player;
 import dev.neovoxel.neobot.game.event.PlayerEvent;
-import org.graalvm.polyglot.HostAccess;
-import org.graalvm.polyglot.Value;
+import dev.neovoxel.neobot.adapter.Player;
+import dev.neovoxel.neobot.misc.EventListener;
 
-import java.util.ArrayList;
-import java.util.IdentityHashMap;
-import java.util.List;
-import java.util.Map;
-
-public class GameEventListener {
-
-    private final NeoBot plugin;
-
-    private final Map<Value, String> map = new IdentityHashMap<>();
-
+public class GameEventListener extends EventListener {
     public GameEventListener(NeoBot plugin) {
-        this.plugin = plugin;
-    }
-
-    public void reset() {
-        map.clear();
-    }
-
-    @HostAccess.Export
-    public void register(String eventName, Value method) {
-        if (method.canExecute()) map.put(method, eventName);
-    }
-
-    public void clearUuidContext(String uuid) {
-        List<Value> toRemove = new ArrayList<>();
-        for (Map.Entry<Value, String> entry : map.entrySet()) {
-            if (entry.getKey().getContext().getBindings("js").getMember("__uuid__").asString().equals(uuid)) {
-                toRemove.add(entry.getKey());
-            }
-        }
-        for (Value value : toRemove) {
-            map.remove(value);
-        }
-    }
-
-    private void fireEvent(String eventName, Object... args) {
-        for (Map.Entry<Value, String> entry : map.entrySet()) {
-            if (entry.getValue().equals(eventName)) {
-                entry.getKey().execute(args);
-            }
-        }
+        super(plugin);
     }
 
     public void onLogin(LoginEvent event) {
