@@ -19,6 +19,8 @@ import java.lang.reflect.Method;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.logging.Handler;
+import java.util.logging.LogRecord;
 
 public class ScriptProvider {
     @Getter
@@ -113,6 +115,12 @@ public class ScriptProvider {
                 plugin.getNeoLogger().warn("The script " + file.getName() + " is using a newer schema version than the current one. Please update the plugin.");
                 continue;
             }
+            if (jsonObject.has("required-all-access") && jsonObject.getBoolean("required-all-access")) {
+                if (!plugin.getGeneralConfig().getBoolean("js.all-access")) {
+                    plugin.getNeoLogger().warn("The script " + file.getName() + " requires all-access, but it is not enabled.");
+                    continue;
+                }
+            }
             Script script = new Script(
                     schemaVersion,
                     jsonObject.getString("id"),
@@ -187,6 +195,11 @@ public class ScriptProvider {
                     .replace("supported", String.valueOf(pluginSchemaVersion))
                     .replace("current", String.valueOf(schemaVersion));
         }
+        if (jsonObject.has("required-all-access") && jsonObject.getBoolean("required-all-access")) {
+            if (!plugin.getGeneralConfig().getBoolean("js.all-access")) {
+                return plugin.getMessageConfig().getMessage("internal.script.load.all-access");
+            }
+        }
         Script script = new Script(
                 schemaVersion,
                 jsonObject.getString("id"),
@@ -237,12 +250,28 @@ public class ScriptProvider {
         while ((line = reader.readLine()) != null) {
             builder.append(line).append("\n");
         }
-        Context context = Context.newBuilder("js")
+        Context.Builder contextBuilder = Context.newBuilder("js")
                 .allowIO(true)
-                .allowHostAccess(hostAccess)
                 .allowCreateThread(true)
-                .engine(engine)
-                .build();
+                .logHandler(new Handler() {
+                    @Override
+                    public void publish(LogRecord record) {
+                        plugin.getNeoLogger().info("[[JS]] " + record.getMessage());
+                    }
+
+                    @Override
+                    public void flush() {}
+
+                    @Override
+                    public void close() throws SecurityException {}
+                })
+                .engine(engine);
+        if (plugin.getGeneralConfig().getBoolean("js.all-access")) {
+            contextBuilder.allowAllAccess(true);
+        } else {
+            contextBuilder.allowHostAccess(hostAccess);
+        }
+        Context context = contextBuilder.build();
         String uuid = UUID.randomUUID().toString();
         context.getBindings("js").putMember("qq", plugin.getBotProvider().getBotListener());
         context.getBindings("js").putMember("plugin", plugin);

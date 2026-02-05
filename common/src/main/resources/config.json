@@ -41,5 +41,8 @@
   },
   "repository": {
     "use-github-proxy": true
+  },
+  "js": {
+    "all-access": false
   }
 }

@@ -46,7 +46,8 @@
         "manifest-not-found": "&c未找到脚本信息文件 (manifest.json)!",
         "too-new": "&c你的插件不支持该脚本 (脚本支持 ${current} > 插件支持 ${supported})!",
         "error": "&c在加载脚本的过程中出现了错误: ${error}",
-        "success": "&a成功加载脚本 ${name}!"
+        "success": "&a成功加载脚本 ${name}!",
+        "all-access": "&c该脚本要求访问所有权限! (需要将 config.json 中的 js.all-access 设为 true)"
       },
       "unload": {
         "error": "&c未找到该脚本或该脚本被其它脚本所依赖!",

@@ -2,9 +2,9 @@ package dev.neovoxel.neobot.library;
 
 import dev.neovoxel.jarflow.JarFlow;
 import dev.neovoxel.jarflow.dependency.Dependency;
+import dev.neovoxel.jarflow.loader.ExternalLoader;
+import dev.neovoxel.jarflow.remote.DependencyDownloader;
 import dev.neovoxel.jarflow.repository.Repository;
-import dev.neovoxel.jarflow.util.DependencyDownloader;
-import dev.neovoxel.jarflow.util.ExternalLoader;
 import dev.neovoxel.neobot.NeoBot;
 import dev.neovoxel.neobot.util.ListUtil;
 import dev.neovoxel.nsapi.util.DatabaseStorageType;
@@ -25,7 +25,11 @@ public interface LibraryProvider {
         String fileName = json.getArtifactId() + "-" + json.getVersion();
         Path path = libDir.toPath().resolve(json.getGroupId()).resolve(json.getArtifactId()).resolve(json.getVersion()).resolve(fileName + ".jar");
         if (!hasDownloaded(libDir, json)) {
-            DependencyDownloader.download(Repository.mavenCentral(), json, libDir, 4);
+            Repository repository = Repository.mavenCentral();
+            String downloadUrl = repository.getUrl() + json.getGroupId().replace(".", "/") +
+                    "/" + json.getArtifactId() + "/" + json.getVersion() + "/" +
+                    json.getArtifactId() + "-" + json.getVersion() + ".jar";
+            DependencyDownloader.download(downloadUrl, json, libDir, 4);
         }
         JarFlow.getLoader().load(path.toFile());
         Dependency wsApi = Dependency.builder()

@@ -236,10 +236,14 @@ public class BotListener implements NBotListener {
     }
 
     private void fireEvent(String eventName, NEvent event) {
-        for (Map.Entry<Value, String> entry : map.entrySet()) {
-            if (entry.getValue().equals(eventName)) {
-                entry.getKey().execute(event);
+        try {
+            for (Map.Entry<Value, String> entry : map.entrySet()) {
+                if (entry.getValue().equals(eventName)) {
+                    entry.getKey().execute(event);
+                }
             }
+        } catch (Exception e) {
+            plugin.getNeoLogger().error("Failed to fire event", e);
         }
     }
     
