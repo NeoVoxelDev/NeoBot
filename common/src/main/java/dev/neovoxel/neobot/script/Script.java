@@ -62,6 +62,12 @@ public class Script {
         for (Script script : scripts) {
             String currentScript = script.getId();
 
+            for (String dependency : script.getDepends()) {
+                if (scriptMap.containsKey(dependency)) {
+                    graph.get(dependency).add(currentScript);
+                }
+            }
+
             for (String afterDependency : script.getLoadafter()) {
                 if (scriptMap.containsKey(afterDependency)) {
                     graph.get(afterDependency).add(currentScript);

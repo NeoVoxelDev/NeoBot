@@ -47,8 +47,12 @@ public class GameEventListener {
 
     private void fireEvent(String eventName, Object... args) {
         for (Map.Entry<Value, String> entry : map.entrySet()) {
-            if (entry.getValue().equals(eventName)) {
-                entry.getKey().execute(args);
+            try {
+                if (entry.getValue().equals(eventName)) {
+                    entry.getKey().execute(args);
+                }
+            } catch (Exception e) {
+                plugin.getNeoLogger().warn("There's an error while firing event " + eventName + ": " + e);
             }
         }
     }
