@@ -195,4 +195,9 @@ public class NeoBotBukkit extends JavaPlugin implements NeoBot {
         }
         return null;
     }
+
+    @Override
+    public String getVersion() {
+        return getDescription().getVersion();
+    }
 }

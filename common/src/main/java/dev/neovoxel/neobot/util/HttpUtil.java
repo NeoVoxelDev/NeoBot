@@ -1,5 +1,8 @@
 package dev.neovoxel.neobot.util;
 
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -71,5 +74,19 @@ public class HttpUtil {
             }
         }
         return url;
+    }
+
+    public static String getLatestVersion(boolean needGithubProxy) throws IOException {
+        String content = get("https://api.github.com/repos/NeoVoxelDev/NeoBot/releases",
+                new HashMap<>(), needGithubProxy);
+        JSONArray jsonArray = new JSONArray(content);
+        return jsonArray.getJSONObject(0).getString("name");
+    }
+
+    public static String getLatestCommit(boolean needGithubProxy) throws IOException {
+        String content = get("https://api.github.com/repos/NeoVoxelDev/NeoBot/commits",
+                new HashMap<>(), needGithubProxy);
+        JSONArray jsonArray = new JSONArray(content);
+        return jsonArray.getJSONObject(0).getString("sha").substring(0, 7);
     }
 }

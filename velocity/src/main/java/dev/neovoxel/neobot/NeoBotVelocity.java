@@ -198,4 +198,9 @@ public class NeoBotVelocity implements NeoBot {
     public void cancelAllTasks() {
         VelocitySchedulerTask.cancelAllTasks();
     }
+
+    @Override
+    public String getVersion() {
+        return proxyServer.getPluginManager().getPlugin("neobot").get().getDescription().getVersion().orElse("Unknown");
+    }
 }

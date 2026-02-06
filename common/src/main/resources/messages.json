@@ -5,6 +5,7 @@
       "&6NeoBot 帮助信息",
       "&a/neobot help   &b- 查看此帮助信息",
       "&a/neobot reload   &b- 重载插件",
+      "&a/neobot status   &b- 查看插件状态",
       "&a/neobot migrate   &b- 从 AQQBot (v2) 迁移配置和数据",
       "&a/neobot migrate config   &b- 从 AQQBot (v2) 迁移配置",
       "&a/neobot migrate data   &b- 从 AQQBot (v2) 迁移数据",
@@ -22,6 +23,20 @@
     "reload": {
       "reloading": "&a正在重载插件...",
       "reloaded": "&a插件重载完成!"
+    },
+    "status": {
+      "fetching": "&a正在获取插件状态...",
+      "data": {
+        "head": "&6NeoBot 插件状态",
+        "basic": [
+          "&f- &a版本: &b${version}",
+          "&f- &a最新版本: &b${latest_version}",
+          "&f- &a最新开发提交: &b${latest_commit}"
+        ],
+        "bot_head": "&f- &a机器人连接信息",
+        "bot": "&f  - &a${type}: &b${connected}"
+      },
+      "error": "&c无法获取插件状态: ${error}"
     },
     "migration": {
       "checking-libraries": "&b检查前置库中...",

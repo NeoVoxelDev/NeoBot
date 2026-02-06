@@ -136,4 +136,6 @@ public interface NeoBot extends ConfigProvider, GameProvider, LibraryProvider, S
 
     @HostAccess.Export
     RemoteExecutor getExecutorByName(String name);
+
+    String getVersion();
 }

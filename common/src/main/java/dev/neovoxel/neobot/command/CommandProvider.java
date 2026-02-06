@@ -1,5 +1,8 @@
 package dev.neovoxel.neobot.command;
 
+import dev.neovoxel.nbapi.client.NBotClient;
+import dev.neovoxel.nbapi.client.OBWSClient;
+import dev.neovoxel.nbapi.client.OBWSServer;
 import dev.neovoxel.neobot.NeoBot;
 import dev.neovoxel.neobot.adapter.CommandSender;
 import dev.neovoxel.neobot.migrate.ConfigMigration;
@@ -7,12 +10,14 @@ import dev.neovoxel.neobot.migrate.DataMigration;
 import dev.neovoxel.neobot.script.Script;
 import dev.neovoxel.neobot.script.remote.RemoteScript;
 import dev.neovoxel.neobot.script.remote.Repository;
+import dev.neovoxel.neobot.util.HttpUtil;
 import dev.neovoxel.nsapi.entity.Row;
 import dev.neovoxel.nsapi.table.DatabaseTable;
 import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Value;
 import org.json.JSONArray;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,6 +64,41 @@ public abstract class CommandProvider {
                     } catch (Throwable e) {
                         e.printStackTrace();
                     }
+                } else sender.sendMessage(plugin.getMessageConfig().getMessage("internal.no-permission"));
+            } else if (args[0].equalsIgnoreCase("status")) {
+                if (sender.hasPermission("neobot.command.status")) {
+                    sender.sendMessage(plugin.getMessageConfig().getMessage("internal.status.fetching"));
+                    plugin.submitAsync(() -> {
+                        boolean needGithubProxy = plugin.getGeneralConfig().getBoolean("repository.use-github-proxy");
+                        String currentVersion = plugin.getVersion();
+                        try {
+                            String latestVersion = HttpUtil.getLatestVersion(needGithubProxy);
+                            String latestCommit = HttpUtil.getLatestCommit(needGithubProxy);
+                            sender.sendMessage(plugin.getMessageConfig().getMessage("internal.status.data.head"));
+                            for (String message : plugin.getMessageConfig().getStringArray("internal.status.data.basic")) {
+                                message = message
+                                        .replace("${version}", currentVersion)
+                                        .replace("${latest_version}", latestVersion)
+                                        .replace("${latest_commit}", latestCommit);
+                                sender.sendMessage(message);
+                            }
+                            sender.sendMessage(plugin.getMessageConfig().getMessage("internal.status.data.bot_head"));
+                            for (NBotClient client : plugin.getBotProvider().getBot()) {
+                                if (client instanceof OBWSServer) {
+                                    sender.sendMessage(plugin.getMessageConfig().getString("internal.status.data.bot")
+                                            .replace("${type}", "onebot11-ws-reverse")
+                                            .replace("${connected}", client.isConnected() ? "在线" : "离线"));
+                                } else if (client instanceof OBWSClient) {
+                                    sender.sendMessage(plugin.getMessageConfig().getString("internal.status.data.bot")
+                                            .replace("${type}", "onebot11-ws")
+                                            .replace("${connected}", client.isConnected() ? "在线" : "离线"));
+                                }
+                            }
+                        } catch (IOException e) {
+                            sender.sendMessage(plugin.getMessageConfig().getMessage("internal.status.error")
+                                    .replace("${error}", e.toString()));
+                        }
+                    });
                 } else sender.sendMessage(plugin.getMessageConfig().getMessage("internal.no-permission"));
             }
         } else if (args.length == 2) {
