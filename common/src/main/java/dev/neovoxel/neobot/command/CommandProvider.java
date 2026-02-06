@@ -82,7 +82,7 @@ public abstract class CommandProvider {
                                         .replace("${latest_commit}", latestCommit);
                                 sender.sendMessage(message);
                             }
-                            sender.sendMessage(plugin.getMessageConfig().getMessage("internal.status.data.bot_head"));
+                            sender.sendMessage(plugin.getMessageConfig().getString("internal.status.data.bot_head"));
                             for (NBotClient client : plugin.getBotProvider().getBot()) {
                                 if (client instanceof OBWSServer) {
                                     sender.sendMessage(plugin.getMessageConfig().getString("internal.status.data.bot")
