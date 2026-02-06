@@ -6,6 +6,7 @@
       "&a/neobot help   &b- 查看此帮助信息",
       "&a/neobot reload   &b- 重载插件",
       "&a/neobot status   &b- 查看插件状态",
+      "&a/neobot init   &b- 初始化插件 (安装基本脚本, 小白使用)",
       "&a/neobot migrate   &b- 从 AQQBot (v2) 迁移配置和数据",
       "&a/neobot migrate config   &b- 从 AQQBot (v2) 迁移配置",
       "&a/neobot migrate data   &b- 从 AQQBot (v2) 迁移数据",
@@ -20,6 +21,10 @@
       "&a/neobot repo scriptlist [url/name]   &b- 获取远程脚本仓库的所有脚本",
       "&a/neobot repo install <name> [version]   &b- 从远程脚本仓库安装脚本"
     ],
+    "init": {
+      "starting": "&a开始进行懒人式插件初始化...",
+      "complete": "&a懒人式插件初始化完成!"
+    },
     "reload": {
       "reloading": "&a正在重载插件...",
       "reloaded": "&a插件重载完成!"
@@ -109,7 +114,8 @@
         "error": "&c在安装脚本时出现了错误: ${error}",
         "start": "&a开始安装脚本...",
         "success": "&a成功下载并加载脚本!",
-        "success-download": "&a成功下载脚本集! &e(该脚本集由多个脚本组成, 请你手动 /neobot script reload 加载)"
+        "success-download": "&a成功下载脚本集! &e(该脚本集由多个脚本组成, 请你手动 /neobot script reload 加载)",
+        "not-found": "&c未找到该脚本!"
       }
     },
     "no-permission": "&cYou don't have permission to do this!"
