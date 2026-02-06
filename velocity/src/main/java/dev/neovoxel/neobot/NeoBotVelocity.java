@@ -31,7 +31,7 @@ import java.io.File;
 import java.nio.file.Path;
 import java.time.Duration;
 
-@Plugin(id = "neobot", name = "NeoBot", version = "0.1", authors = {"NeoVoxelDev Team"}, description = "A bot plugin that connects Minecraft with QQ, Kook, Discord, etc.")
+@Plugin(id = "neobot", name = "NeoBot", version = "0.2", authors = {"NeoVoxelDev Team"}, description = "A bot plugin that connects Minecraft with QQ, Kook, Discord, etc.")
 public class NeoBotVelocity implements NeoBot {
 
     @Getter
