@@ -200,4 +200,19 @@ public class NeoBotBukkit extends JavaPlugin implements NeoBot {
     public String getVersion() {
         return getDescription().getVersion();
     }
+
+    @Override
+    public boolean getOnlineMode() {
+        return Bukkit.getOnlineMode();
+    }
+
+    @Override
+    public String getMinecraftVersion() {
+        return Bukkit.getVersion();
+    }
+
+    @Override
+    public String getBrand() {
+        return Bukkit.getName();
+    }
 }

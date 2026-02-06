@@ -138,4 +138,10 @@ public interface NeoBot extends ConfigProvider, GameProvider, LibraryProvider, S
     RemoteExecutor getExecutorByName(String name);
 
     String getVersion();
+
+    boolean getOnlineMode();
+
+    String getMinecraftVersion();
+
+    String getBrand();
 }
