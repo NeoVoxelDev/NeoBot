@@ -6,6 +6,7 @@ import dev.neovoxel.neobot.adapter.RemoteExecutor;
 import dev.neovoxel.neobot.bot.BotProvider;
 import dev.neovoxel.neobot.command.CommandProvider;
 import dev.neovoxel.neobot.config.ConfigProvider;
+import dev.neovoxel.neobot.config.ConfigWatcher;
 import dev.neovoxel.neobot.game.GameEventListener;
 import dev.neovoxel.neobot.game.GameProvider;
 import dev.neovoxel.neobot.library.LibraryProvider;
@@ -16,6 +17,8 @@ import dev.neovoxel.neobot.storage.StorageProvider;
 import org.graalvm.polyglot.HostAccess;
 
 import java.io.File;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public interface NeoBot extends ConfigProvider, GameProvider, LibraryProvider, SchedulerProvider {
     default void enable() {
@@ -47,12 +50,14 @@ public interface NeoBot extends ConfigProvider, GameProvider, LibraryProvider, S
                     getNeoLogger().error("Failed to load script system", e);
                 }
             });
+            ConfigWatcher.start(this);
         } catch (Throwable e) {
             getNeoLogger().error("Failed to load the plugin", e);
         }
     }
     
     default void disable() {
+        ConfigWatcher.stop();
         getGameEventListener().onPluginDisable();
         getGeneralConfig().flush(this);
         getMessageConfig().flush(this);
