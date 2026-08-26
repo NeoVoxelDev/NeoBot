@@ -21,8 +21,6 @@ public class ConfigMigration {
     }
 
     public static void migrate(NeoBot plugin, CommandSender sender) throws Throwable {
-        sender.sendMessage(plugin.getMessageConfig().getMessage("internal.migration.checking-libraries"));
-        MigrationUtil.loadLibrary();
         JSONObject configObj = MigrationUtil.parseOriginConfig(plugin, "config");
         if (configObj == null) {
             sender.sendMessage(plugin.getMessageConfig().getMessage("internal.migration.no-config")
@@ -81,8 +79,6 @@ public class ConfigMigration {
     }
     
     public static void migrateMessage(NeoBot plugin, CommandSender sender) throws Throwable {
-        sender.sendMessage(plugin.getMessageConfig().getMessage("internal.migration.checking-libraries"));
-        MigrationUtil.loadLibrary();
         JSONObject configObj = MigrationUtil.parseOriginConfig(plugin, "config");
         if (configObj == null) {
             sender.sendMessage(plugin.getMessageConfig().getMessage("internal.migration.no-config")

@@ -108,7 +108,7 @@ public class Config {
         JSONArray array = newObj.getJSONArray(nodes[nodes.length - 1]);
         List<String> strings = new ArrayList<>();
         for (int i = 0; i < array.length(); i++) {
-            strings.add(array.getString(i));
+            strings.add(String.valueOf(array.get(i)));
         }
         return strings;
     }

@@ -1,4 +1,9 @@
 .gradle
+.gradle-audit/
+.gradle-final/
+.gradle-remote/
+.gradle-status/
+.codex_permission_probe
 build/
 !gradle/wrapper/gradle-wrapper.jar
 !**/src/main/**/build/

@@ -23,7 +23,8 @@ public class RemoteScript {
 
     public String download(NeoBot plugin) throws IOException {
         File tempFile = Files.createTempFile("neobot", ".zip").toFile();
-        HttpUtil.download(download, tempFile, MapUtil.of(), plugin.getGeneralConfig().getBoolean("repository.use-github-proxy"));
+        HttpUtil.download(download, tempFile, MapUtil.of(), plugin.getGeneralConfig().getBoolean("repository.use-github-proxy"),
+                plugin.getGeneralConfig().getString("repository.github-proxy-url"));
         File tempDir = Files.createTempDirectory("neobot").toFile();
         FileUtil.unzip(tempFile, tempDir);
         if (tempDir.listFiles().length == 1) {

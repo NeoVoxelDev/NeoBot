@@ -32,6 +32,75 @@
       "port": "8080",
       "access-token": ""
     },
+    "qq": {
+      "server-status": {
+        "enabled": true
+      },
+      "player-status": {
+        "enabled": true
+      },
+      "management": {
+        "owner-user-ids": [],
+        "admin-user-ids": []
+      }
+    },
+    "player-status": {
+      "join-message": "[${server}] ${player} 进入了服务器！",
+      "quit-message": "[${server}] ${player} 离开了服务器！",
+      "death-message": "[${server}] ${player} 逝世了！"
+    },
+    "account": {
+      "require-binding": true,
+      "require-binding-message": "请绑定 QQ 或 Discord 账号后再进入服务器。"
+    },
+    "discord": {
+      "enabled": false,
+      "token": "",
+      "intents": 37377,
+      "proxy": {
+        "mode": "official",
+        "url": ""
+      },
+      "channels": {
+        "chat-channel-id": "",
+        "bind-channel-id": "",
+        "server-messages-channel-id": ""
+      },
+      "server-status": {
+        "enabled": true,
+        "server-name": "Minecraft",
+        "start-message": "[${server}] 服务器已启动!",
+        "stop-message": "[${server}] 服务器已关闭!"
+      },
+      "player-status": {
+        "enabled": true
+      },
+      "chat": {
+        "maximum-length": 1900,
+        "ignore-self": true,
+        "ignore-bots": true,
+        "minecraft-to-discord": {
+          "enabled": true,
+          "format": "[MC] ${player}: ${message}"
+        },
+        "discord-to-minecraft": {
+          "enabled": true,
+          "format": "[Discord(${channel})] ${user}: ${message}"
+        }
+      },
+      "account": {
+        "maximum-bindings-per-user": 1
+      },
+      "management": {
+        "owner-user-ids": [],
+        "admin-user-ids": [],
+        "default-server": "login",
+        "servers": [
+          {"server-name": "login", "prefix": "login", "executor": "bukkit", "enabled": true}
+        ],
+        "remote-command-result-format": "[NeoBot] 命令执行结果: \n${result}"
+      }
+    },
     "options": {
       "check-interval": 30,
       "enable-groups": [
@@ -40,7 +109,20 @@
     }
   },
   "repository": {
-    "use-github-proxy": true
+    "use-github-proxy": false,
+    "github-proxy-url": ""
+  },
+  "chat-forward": {
+    "to-qq": {
+      "enable": true,
+      "format": "[MC] ${player}: ${message}",
+      "max-length": 1900
+    },
+    "to-game": {
+      "enable": true,
+      "format": "[QQ群(${group})] ${user}: ${message}",
+      "max-length": 1900
+    }
   },
   "js": {
     "all-access": false
