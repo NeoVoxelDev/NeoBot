@@ -99,7 +99,7 @@ scriptManager.registerBusinessScript("PlayerDeathEvent", function (event) {
 });
 function bindResultText(result, isBind) {
   switch (result) {
-    case "success": case "SUCCESS": return isBind ? "绑定成功！" : "解绑成功！";
+    case "success": case "SUCCESS": return isBind ? "绑定成功!" : "解绑成功!";
     case "error:unknown-player": case "INVALID_PLAYER": return "未找到该 Minecraft 玩家。";
     case "error:already-bound-or-conflict": case "PLAYER_ALREADY_BOUND": return "该账号已被绑定。";
     case "error:not-owner-or-unbound": case "NOT_BOUND": return "该账号未绑定。";

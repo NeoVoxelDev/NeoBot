@@ -45,9 +45,9 @@
       }
     },
     "player-status": {
-      "join-message": "[${server}] ${player} 进入了服务器！",
-      "quit-message": "[${server}] ${player} 离开了服务器！",
-      "death-message": "[${server}] ${player} 逝世了！"
+      "join-message": "[${server}] ${player} 进入了服务器!",
+      "quit-message": "[${server}] ${player} 离开了服务器!",
+      "death-message": "[${server}] ${player} 逝世了!"
     },
     "account": {
       "require-binding": true,
@@ -85,7 +85,7 @@
         },
         "discord-to-minecraft": {
           "enabled": true,
-          "format": "[Discord(${channel})] ${user}: ${message}"
+          "format": "§d[Discord(${channel})]§r §b${user}§r: ${message}"
         }
       },
       "account": {
@@ -120,7 +120,7 @@
     },
     "to-game": {
       "enable": true,
-      "format": "[QQ群(${group})] ${user}: ${message}",
+      "format": "§c[QQ群(${group})]§r §b${user}§r: ${message}",
       "max-length": 1900
     }
   },

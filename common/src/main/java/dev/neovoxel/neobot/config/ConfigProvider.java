@@ -64,9 +64,9 @@ public interface ConfigProvider {
             config.addOption("bot.qq.management.owner-user-ids", new String[0]);
             config.addOption("bot.qq.management.admin-user-ids", new String[0]);
             config.addOption("bot.discord.player-status.enabled", true);
-            config.addOption("bot.player-status.join-message", "[${server}] ${player} 进入了服务器！");
-            config.addOption("bot.player-status.quit-message", "[${server}] ${player} 离开了服务器！");
-            config.addOption("bot.player-status.death-message", "[${server}] ${player} 逝世了！");
+            config.addOption("bot.player-status.join-message", "[${server}] ${player} 进入了服务器!");
+            config.addOption("bot.player-status.quit-message", "[${server}] ${player} 离开了服务器!");
+            config.addOption("bot.player-status.death-message", "[${server}] ${player} 逝世了!");
             config.addOption("bot.account.require-binding", true);
             config.addOption("bot.account.require-binding-message", "请绑定 QQ 或 Discord 账号后再进入服务器。");
             config.addOption("bot.discord.chat.maximum-length", 1900);
@@ -75,7 +75,7 @@ public interface ConfigProvider {
             config.addOption("bot.discord.chat.minecraft-to-discord.enabled", true);
             config.addOption("bot.discord.chat.minecraft-to-discord.format", "[MC] ${player}: ${message}");
             config.addOption("bot.discord.chat.discord-to-minecraft.enabled", true);
-            config.addOption("bot.discord.chat.discord-to-minecraft.format", "[Discord(${channel})] ${user}: ${message}");
+            config.addOption("bot.discord.chat.discord-to-minecraft.format", "§d[Discord(${channel})]§r §b${user}§r: ${message}");
             config.addOption("bot.discord.account.maximum-bindings-per-user", 1);
             config.addOption("bot.discord.management.admin-user-ids", new String[0]);
             config.addOption("bot.discord.management.owner-user-ids", new String[0]);
@@ -86,7 +86,7 @@ public interface ConfigProvider {
             config.addOption("chat-forward.to-qq.format", "[MC] ${player}: ${message}");
             config.addOption("chat-forward.to-qq.max-length", 1900);
             config.addOption("chat-forward.to-game.enable", true);
-            config.addOption("chat-forward.to-game.format", "[QQ群(${group})] ${user}: ${message}");
+            config.addOption("chat-forward.to-game.format", "§c[QQ群(${group})]§r §b${user}§r: ${message}");
             config.addOption("chat-forward.to-game.max-length", 1900);
             config.addOption("repository.use-github-proxy", false);
             config.addOption("repository.github-proxy-url", "");

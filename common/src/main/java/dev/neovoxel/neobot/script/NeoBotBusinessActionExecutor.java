@@ -176,11 +176,11 @@ public final class NeoBotBusinessActionExecutor implements BusinessActionExecuto
     }
     @HostAccess.Export public String configuredJoinMessage() {
         return plugin.getGeneralConfig().has("bot.player-status.join-message")
-                ? plugin.getGeneralConfig().getString("bot.player-status.join-message") : "[${server}] ${player} 进入了服务器！";
+                ? plugin.getGeneralConfig().getString("bot.player-status.join-message") : "[${server}] ${player} 进入了服务器!";
     }
     @HostAccess.Export public String configuredQuitMessage() {
         return plugin.getGeneralConfig().has("bot.player-status.quit-message")
-                ? plugin.getGeneralConfig().getString("bot.player-status.quit-message") : "[${server}] ${player} 离开了服务器！";
+                ? plugin.getGeneralConfig().getString("bot.player-status.quit-message") : "[${server}] ${player} 离开了服务器!";
     }
     @HostAccess.Export public String configuredRemoteCommandResultFormat() {
         return plugin.getGeneralConfig().has("bot.discord.management.remote-command-result-format")
@@ -188,7 +188,7 @@ public final class NeoBotBusinessActionExecutor implements BusinessActionExecuto
     }
     @HostAccess.Export public String configuredDeathMessage() {
         return plugin.getGeneralConfig().has("bot.player-status.death-message")
-                ? plugin.getGeneralConfig().getString("bot.player-status.death-message") : "[${server}] ${player} 逝世了！";
+                ? plugin.getGeneralConfig().getString("bot.player-status.death-message") : "[${server}] ${player} 逝世了!";
     }
     @HostAccess.Export public boolean configuredAccountRequireBinding() {
         return plugin.getGeneralConfig().has("bot.account.require-binding")

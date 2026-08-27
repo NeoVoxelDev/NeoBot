@@ -215,14 +215,14 @@ class DefaultBusinessScriptTest {
         business.discordChannel = "333";
 
         // Vanilla already prints its own join/quit line in-game, so NeoBot must not broadcast a second one
-        // (regression: it previously did, producing a duplicate "[Minecraft] X 进入了服务器！" line).
+        // (regression: it previously did, producing a duplicate "[Minecraft] X 进入了服务器!" line).
         Result join = run("PlayerJoinEvent", new FakePlayerChatEvent("Steve", ""));
-        assertEquals("[TestServer] Steve 进入了服务器！", join.content);
+        assertEquals("[TestServer] Steve 进入了服务器!", join.content);
         assertEquals(java.util.Arrays.asList("qq:111", "discord:333"), join.targets);
         assertEquals(java.util.Arrays.asList("sendToQQ", "sendToDiscord"), join.actions);
 
         Result quit = run("PlayerQuitEvent", new FakePlayerChatEvent("Steve", ""));
-        assertEquals("[TestServer] Steve 离开了服务器！", quit.content);
+        assertEquals("[TestServer] Steve 离开了服务器!", quit.content);
         assertEquals(java.util.Arrays.asList("qq:111", "discord:333"), quit.targets);
         assertEquals(java.util.Arrays.asList("sendToQQ", "sendToDiscord"), quit.actions);
     }
@@ -246,9 +246,9 @@ class DefaultBusinessScriptTest {
         business.discordChannel = "333";
 
         // Vanilla already prints its own death message in-game, so NeoBot must not broadcast a second one
-        // (regression: it previously did, producing a duplicate "[Minecraft] X 逝世了！" line).
+        // (regression: it previously did, producing a duplicate "[Minecraft] X 逝世了!" line).
         Result death = run("PlayerDeathEvent", new FakePlayerChatEvent("Steve", ""));
-        assertEquals("[TestServer] Steve 逝世了！", death.content);
+        assertEquals("[TestServer] Steve 逝世了!", death.content);
         assertEquals(java.util.Arrays.asList("qq:111", "discord:333"), death.targets);
         assertEquals(java.util.Arrays.asList("sendToQQ", "sendToDiscord"), death.actions);
     }
@@ -292,14 +292,14 @@ class DefaultBusinessScriptTest {
     void bindAndUnbindSuccessMessagesAreDistinctOnBothPlatforms() {
         Result qqBind = run("BindEvent", new InboundCommandContext("/bind Steve", "qq-user-1", "qq:555", "qq"));
         Result qqUnbind = run("UnbindEvent", new InboundCommandContext("/unbind Steve", "qq-user-1", "qq:555", "qq"));
-        assertEquals("绑定成功！", qqBind.content);
-        assertEquals("解绑成功！", qqUnbind.content);
+        assertEquals("绑定成功!", qqBind.content);
+        assertEquals("解绑成功!", qqUnbind.content);
         assertNotEquals(qqBind.content, qqUnbind.content);
 
         Result discordBind = run("BindEvent", new InboundCommandContext("/bind Steve", "discord-user-1", "discord:777", "discord"));
         Result discordUnbind = run("UnbindEvent", new InboundCommandContext("/unbind Steve", "discord-user-1", "discord:777", "discord"));
-        assertEquals("绑定成功！", discordBind.content);
-        assertEquals("解绑成功！", discordUnbind.content);
+        assertEquals("绑定成功!", discordBind.content);
+        assertEquals("解绑成功!", discordUnbind.content);
         assertNotEquals(discordBind.content, discordUnbind.content);
     }
 
@@ -510,9 +510,9 @@ class DefaultBusinessScriptTest {
         boolean discordServerStatusEnabled = true;
         boolean qqPlayerStatusEnabled = true;
         boolean discordPlayerStatusEnabled = true;
-        String joinMessage = "[${server}] ${player} 进入了服务器！";
-        String quitMessage = "[${server}] ${player} 离开了服务器！";
-        String deathMessage = "[${server}] ${player} 逝世了！";
+        String joinMessage = "[${server}] ${player} 进入了服务器!";
+        String quitMessage = "[${server}] ${player} 离开了服务器!";
+        String deathMessage = "[${server}] ${player} 逝世了!";
         boolean accountRequireBinding = false;
         String accountRequireBindingMessage = "Account binding required for ${player}";
         final java.util.Set<java.util.UUID> qqBoundUuids = new java.util.HashSet<>();
