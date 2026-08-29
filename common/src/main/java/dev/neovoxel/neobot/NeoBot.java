@@ -13,6 +13,7 @@ import dev.neovoxel.neobot.script.ScriptProvider;
 import dev.neovoxel.neobot.script.ScriptScheduler;
 import dev.neovoxel.neobot.storage.StorageProvider;
 import dev.neovoxel.neobot.discord.DiscordService;
+import dev.neovoxel.neobot.update.UpdateService;
 import org.graalvm.polyglot.HostAccess;
 
 import java.io.File;
@@ -33,6 +34,10 @@ public interface NeoBot extends ConfigProvider, GameProvider, SchedulerProvider 
             BotProvider botProvider = new BotProvider(this);
             setBotProvider(botProvider);
             getBotProvider().loadBot(this);
+            getNeoLogger().info("Scheduling update checks...");
+            UpdateService updateService = new UpdateService(this);
+            long checkIntervalSeconds = Math.max(1, getGeneralConfig().getInt("repository.auto-update.check-interval-minutes")) * 60L;
+            submitAsync(updateService::checkForUpdate, 30, checkIntervalSeconds);
             getNeoLogger().info("Loading script system...");
             submitAsync(() -> {
                 try {
@@ -161,4 +166,11 @@ public interface NeoBot extends ConfigProvider, GameProvider, SchedulerProvider 
     String getMinecraftVersion();
 
     String getBrand();
+
+    /** Where a downloaded update jar for the given version should be staged so the host platform picks
+     *  it up on next restart. Returns null on platforms that don't support staged updates, in which case
+     *  the auto-update download step is skipped (the new-version notice still fires normally). */
+    default File getUpdateStagingFile(String version) {
+        return null;
+    }
 }

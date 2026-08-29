@@ -90,6 +90,10 @@ public interface ConfigProvider {
             config.addOption("chat-forward.to-game.max-length", 1900);
             config.addOption("repository.use-github-proxy", false);
             config.addOption("repository.github-proxy-url", "");
+            config.addOption("repository.auto-update.enabled", false);
+            config.addOption("repository.auto-update.check-interval-minutes", 60);
+            config.addOption("repository.auto-update.connect-timeout-ms", 3000);
+            config.addOption("repository.auto-update.mirrors", new String[0]);
             setGeneralConfig(config);
         } catch (Exception e) {
             plugin.getNeoLogger().error("Failed to release the general config file", e);

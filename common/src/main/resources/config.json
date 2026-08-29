@@ -110,7 +110,13 @@
   },
   "repository": {
     "use-github-proxy": false,
-    "github-proxy-url": ""
+    "github-proxy-url": "",
+    "auto-update": {
+      "enabled": false,
+      "check-interval-minutes": 60,
+      "connect-timeout-ms": 3000,
+      "mirrors": []
+    }
   },
   "chat-forward": {
     "to-qq": {

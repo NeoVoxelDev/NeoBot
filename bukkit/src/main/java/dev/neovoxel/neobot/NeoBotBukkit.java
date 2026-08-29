@@ -22,6 +22,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.graalvm.polyglot.HostAccess;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -226,6 +227,15 @@ public class NeoBotBukkit extends JavaPlugin implements NeoBot {
     @Override
     public String getBrand() {
         return Bukkit.getName();
+    }
+
+    /** Bukkit's plugin loader replaces a running plugin's jar with any same-named jar found under
+     *  plugins/update/ on the next server start, so the staging file must keep the original jar name. */
+    @Override
+    public File getUpdateStagingFile(String version) {
+        File pluginsFolder = getDataFolder().getParentFile();
+        if (pluginsFolder == null) return null;
+        return new File(new File(pluginsFolder, "update"), getFile().getName());
     }
 
     static int[] parseMinecraftVersion(String version) {

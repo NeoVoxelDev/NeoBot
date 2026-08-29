@@ -127,6 +127,14 @@ public class HttpUtil {
         return jsonArray.getJSONObject(0).getString("name");
     }
 
+    /** Full JSON of the newest GitHub release (name, assets, etc.), for callers that need more than
+     *  just the version name (e.g. locating a downloadable .jar asset for auto-update). */
+    public static JSONObject getLatestReleaseJson(boolean needGithubProxy, String proxyBase) throws IOException {
+        String content = get("https://api.github.com/repos/NeoVoxelDev/NeoBot/releases",
+                new HashMap<>(), needGithubProxy, proxyBase);
+        return new JSONArray(content).getJSONObject(0);
+    }
+
     static String proxyUrlForTest(String url) { return githubProxy(url); }
     static String proxyUrlForTest(String url, String proxyBase) { return githubProxy(url, proxyBase); }
 
@@ -139,5 +147,51 @@ public class HttpUtil {
                 new HashMap<>(), needGithubProxy, proxyBase);
         JSONArray jsonArray = new JSONArray(content);
         return jsonArray.getJSONObject(0).getString("sha").substring(0, 7);
+    }
+
+    /** Measures how long a HEAD request against this mirror, rewriting a real GitHub API URL the way
+     *  auto-update requests will, takes to come back. Returns -1 if the mirror errors out, times out,
+     *  or is otherwise unusable, rather than throwing, so callers can rank many mirrors without
+     *  per-mirror try/catch. */
+    public static long probeMirrorLatencyMillis(String mirrorBase, int timeoutMs) {
+        try {
+            String testUrl = githubProxy("https://api.github.com/repos/NeoVoxelDev/NeoBot/releases", mirrorBase);
+            long start = System.currentTimeMillis();
+            URL url = new URL(testUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("HEAD");
+            connection.setRequestProperty("User-Agent", "NeoBot/0.2");
+            connection.setConnectTimeout(timeoutMs);
+            connection.setReadTimeout(timeoutMs);
+            int code = connection.getResponseCode();
+            connection.disconnect();
+            if (code >= 200 && code < 500) return System.currentTimeMillis() - start;
+            return -1;
+        } catch (IOException error) {
+            return -1;
+        }
+    }
+
+    /** Pure selection logic (no network), kept separate from probeMirrorLatencyMillis so it can be
+     *  unit-tested with a fake prober instead of real HTTP calls. */
+    static String selectFastest(List<String> mirrors, java.util.function.ToLongFunction<String> prober) {
+        String best = null;
+        long bestLatency = Long.MAX_VALUE;
+        for (String mirror : mirrors) {
+            if (mirror == null || mirror.trim().isEmpty()) continue;
+            long latency = prober.applyAsLong(mirror);
+            if (latency >= 0 && latency < bestLatency) {
+                bestLatency = latency;
+                best = mirror;
+            }
+        }
+        return best;
+    }
+
+    /** The fastest reachable mirror among the configured ones, or null when none respond within
+     *  timeoutMs. Callers should fall back to a direct connection (or the single legacy
+     *  repository.github-proxy-url) when this returns null. */
+    public static String pickBestMirror(List<String> mirrors, int timeoutMs) {
+        return selectFastest(mirrors, mirror -> probeMirrorLatencyMillis(mirror, timeoutMs));
     }
 }

@@ -82,4 +82,22 @@ class DefaultConfigJsonTest {
             assertEquals("[NeoBot] 命令执行结果: \n${result}", format);
         }
     }
+
+    @Test
+    void defaultConfigContainsAutoUpdateBlockDisabledByDefault() throws Exception {
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream("config.json")) {
+            assertNotNull(in);
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024]; int read;
+            while ((read = in.read(buffer)) != -1) bytes.write(buffer, 0, read);
+            JSONObject json = new JSONObject(new String(bytes.toByteArray(), StandardCharsets.UTF_8));
+            JSONObject repository = json.getJSONObject("repository");
+            assertFalse(repository.getBoolean("use-github-proxy"));
+            JSONObject autoUpdate = repository.getJSONObject("auto-update");
+            assertFalse(autoUpdate.getBoolean("enabled"));
+            assertEquals(60, autoUpdate.getInt("check-interval-minutes"));
+            assertEquals(3000, autoUpdate.getInt("connect-timeout-ms"));
+            assertEquals(0, autoUpdate.getJSONArray("mirrors").length());
+        }
+    }
 }
