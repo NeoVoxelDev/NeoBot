@@ -29,10 +29,8 @@ public class StorageProvider {
     }
 
     public void loadStorage() throws Throwable {
-        plugin.loadStorageApi();
         DatabaseStorageType storageType = DatabaseStorageType.valueOf(plugin.getGeneralConfig().getString("storage.type").toUpperCase());
         setStorageType(storageType.name().toLowerCase());
-        plugin.loadStorageLibrary(storageType);
         initDriver(storageType);
         String host = plugin.getGeneralConfig().getString("storage.host");
         int port = plugin.getGeneralConfig().getInt("storage.port");

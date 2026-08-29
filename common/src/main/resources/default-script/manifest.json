@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "id": "neobot-default-business",
+  "name": "NeoBot Default Business",
+  "author": "NeoBot",
+  "version": "1.0.0",
+  "entrypoint": "main.js"
+}

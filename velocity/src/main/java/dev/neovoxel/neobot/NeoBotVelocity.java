@@ -7,7 +7,6 @@ import com.velocitypowered.api.plugin.Plugin;
 import com.velocitypowered.api.plugin.annotation.DataDirectory;
 import com.velocitypowered.api.proxy.ProxyServer;
 import com.velocitypowered.api.util.GameProfile;
-import dev.neovoxel.jarflow.JarFlow;
 import dev.neovoxel.neobot.adapter.*;
 import dev.neovoxel.neobot.bot.BotProvider;
 import dev.neovoxel.neobot.command.CommandProvider;
@@ -15,7 +14,6 @@ import dev.neovoxel.neobot.config.EnhancedConfig;
 import dev.neovoxel.neobot.config.ScriptConfig;
 import dev.neovoxel.neobot.event.VelocityEventManager;
 import dev.neovoxel.neobot.game.GameEventListener;
-import dev.neovoxel.neobot.loader.VelocityLibraryLoader;
 import dev.neovoxel.neobot.scheduler.ScheduledTask;
 import dev.neovoxel.neobot.script.ScriptProvider;
 import dev.neovoxel.neobot.script.ScriptScheduler;
@@ -83,7 +81,6 @@ public class NeoBotVelocity implements NeoBot {
         this.proxyServer = proxyServer;
         this.logger = logger;
         this.dataDirectory = dataDirectory;
-        JarFlow.setLoader(new VelocityLibraryLoader(this, proxyServer.getPluginManager()));
     }
 
     @Subscribe

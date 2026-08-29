@@ -1,6 +1,7 @@
 package dev.neovoxel.neobot.script;
 
-import dev.neovoxel.jarflow.JarFlow;
+import io.github.classgraph.ClassGraph;
+import io.github.classgraph.ScanResult;
 import dev.neovoxel.neobot.NeoBot;
 import dev.neovoxel.neobot.util.ValueWithScript;
 import dev.neovoxel.neobot.util.http.HttpBuilder;
@@ -23,6 +24,8 @@ import java.util.logging.Handler;
 import java.util.logging.LogRecord;
 
 public class ScriptProvider {
+    private final ScriptDispatcher businessDispatcher = new ScriptDispatcher(2000L);
+    private volatile BusinessActionExecutor actionExecutor;
     @Getter
     @Setter
     private boolean scriptSystemLoaded = false;
@@ -35,40 +38,79 @@ public class ScriptProvider {
 
     public ScriptProvider(NeoBot plugin) {
         this.plugin = plugin;
+        this.engine = GraalScriptRuntime.createEngine();
+        initializeHostAccess();
+    }
+
+    /** Registers a Java-side bridge for script business dispatch. */
+    public void registerBusinessHandler(ScriptDispatcher.Handler handler) { businessDispatcher.register(handler); }
+    @HostAccess.Export
+    public void registerBusinessScript(final String event, final Value callback) {
+        if (callback == null || !callback.canExecute()) return;
+        businessDispatcher.register((name, context) -> {
+            if (!event.equals(name)) return ScriptDispatchResult.unhandled();
+            Value value = callback.execute(context);
+            if (value == null || value.isNull()) return ScriptDispatchResult.unhandled();
+            if (!value.hasMembers()) return value.asBoolean() ? new ScriptDispatchResult(true, false, null, null, null) : ScriptDispatchResult.unhandled();
+            boolean handled = value.hasMember("handled") && value.getMember("handled").asBoolean();
+            boolean cancelled = value.hasMember("cancelled") && value.getMember("cancelled").asBoolean();
+            String content = value.hasMember("content") && !value.getMember("content").isNull() ? value.getMember("content").asString() : null;
+            java.util.List<String> targets = new java.util.ArrayList<>();
+            java.util.List<String> actions = new java.util.ArrayList<>();
+            if (value.hasMember("targets") && value.getMember("targets").hasArrayElements()) {
+                for (long i = 0; i < value.getMember("targets").getArraySize(); i++) targets.add(value.getMember("targets").getArrayElement(i).asString());
+            }
+            if (value.hasMember("actions") && value.getMember("actions").hasArrayElements()) {
+                for (long i = 0; i < value.getMember("actions").getArraySize(); i++) actions.add(value.getMember("actions").getArrayElement(i).asString());
+            }
+            java.util.Map<String, String> contentByAction = new java.util.HashMap<>();
+            if (value.hasMember("contentByAction") && value.getMember("contentByAction").hasMembers()) {
+                Value byAction = value.getMember("contentByAction");
+                for (String key : byAction.getMemberKeys()) {
+                    Value entry = byAction.getMember(key);
+                    if (entry != null && !entry.isNull()) contentByAction.put(key, entry.asString());
+                }
+            }
+            return new ScriptDispatchResult(handled, cancelled, content, targets, actions, contentByAction);
+        });
+    }
+    public ScriptDispatchResult dispatchBusiness(String event, Object context) { return businessDispatcher.dispatch(event, context); }
+    public void setBusinessActionExecutor(BusinessActionExecutor executor) { this.actionExecutor = executor; }
+    public void executeBusinessActions(ScriptDispatchResult result) {
+        if (result == null || result.isCancelled() || actionExecutor == null) return;
+        if (result.getContentByAction().isEmpty()) {
+            actionExecutor.executeAll(result.getActions(), result.getTargets(), result.getContent());
+            return;
+        }
+        for (String action : result.getActions()) {
+            actionExecutor.executeAll(java.util.Collections.singletonList(action), result.getTargets(), result.getContentFor(action));
+        }
     }
 
     int pluginSchemaVersion = 1;
 
     private final Map<Script, Context> contexts = new HashMap<>();
 
-    private static final Engine engine;
+    private final Engine engine;
 
     private static final List<Class<?>> exposed = new ArrayList<>();
 
-    private static final HostAccess hostAccess;
+    private static HostAccess hostAccess;
 
-    static {
-        OutputStream stream = null;
-        try {
-            File jsLog = new File("engine.log");
-            if (!jsLog.exists()) jsLog.createNewFile();
-            stream = new FileOutputStream(jsLog);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        Engine.Builder builder = Engine.newBuilder()
-                .allowExperimentalOptions(true)
-                .option("engine.WarnInterpreterOnly", "false");
-        if (stream != null) {
-            builder.logHandler(stream);
-        }
-        engine = builder.build();
-        try {
-            exposed.addAll(JarFlow.searchClasses("dev.neovoxel.nsapi"));
-            exposed.addAll(JarFlow.searchClasses("dev.neovoxel.nbapi.action"));
-            exposed.addAll(JarFlow.searchClasses("dev.neovoxel.nbapi.event"));
-            exposed.addAll(JarFlow.searchClasses("dev.neovoxel.nbapi.util"));
-        } catch (IOException | ClassNotFoundException e) {
+    private static synchronized void initializeHostAccess() {
+        if (hostAccess != null) return;
+        GraalScriptRuntime.withPluginClassLoader(() -> {
+        try (ScanResult scan = new ClassGraph()
+                .enableClassInfo()
+                .acceptPackages(
+                        "dev.neovoxel.nsapi",
+                        "dev.neovoxel.nbapi.action",
+                        "dev.neovoxel.nbapi.event",
+                        "dev.neovoxel.nbapi.discord",
+                        "dev.neovoxel.nbapi.util")
+                .scan()) {
+            exposed.addAll(scan.getAllClasses().loadClasses());
+        } catch (RuntimeException e) {
             e.printStackTrace();
         }
         HostAccess.Builder builder1 = HostAccess.newBuilder(HostAccess.EXPLICIT);
@@ -88,6 +130,8 @@ public class ScriptProvider {
             }
         }
         hostAccess = builder1.build();
+            return null;
+        });
     }
 
     public boolean isScriptLoaded(Script script) {
@@ -100,6 +144,7 @@ public class ScriptProvider {
         if (!scriptPath.exists()) {
             scriptPath.mkdirs();
         }
+        installDefaultScript(plugin, scriptPath);
         Set<Script> unsortedScripts = new HashSet<>();
         for (File file : scriptPath.listFiles()) {
             if (!file.isDirectory()) {
@@ -109,7 +154,7 @@ public class ScriptProvider {
             if (!manifest.exists()) {
                 continue;
             }
-            JSONObject jsonObject = new JSONObject(new String(Files.readAllBytes(manifest.toPath())));
+            JSONObject jsonObject = new JSONObject(new String(Files.readAllBytes(manifest.toPath()), StandardCharsets.UTF_8));
             int schemaVersion = jsonObject.getInt("schema_version");
             if (schemaVersion > pluginSchemaVersion) {
                 plugin.getNeoLogger().warn("The script " + file.getName() + " is using a newer schema version than the current one. Please update the plugin.");
@@ -165,6 +210,33 @@ public class ScriptProvider {
         plugin.getScriptConfig().flush(plugin);
         scriptSystemLoaded = true;
     }
+
+    private void installDefaultScript(NeoBot plugin, File scriptPath) {
+        File target = new File(scriptPath, "default");
+        File manifest = new File(target, "manifest.json");
+        if (manifest.exists()) return;
+        InputStream manifestStream = getClass().getClassLoader().getResourceAsStream("default-script/manifest.json");
+        InputStream entryStream = getClass().getClassLoader().getResourceAsStream("default-script/main.js");
+        if (manifestStream == null || entryStream == null) {
+            plugin.getNeoLogger().error("Default business script resources are missing; business events will be rejected");
+            return;
+        }
+        try {
+            target.mkdirs();
+            copyResource(manifestStream, new File(target, "manifest.json"));
+            copyResource(entryStream, new File(target, "main.js"));
+            plugin.getNeoLogger().info("Installed default business script");
+        } catch (IOException error) {
+            plugin.getNeoLogger().error("Failed to install default business script; business events will be rejected", error);
+        }
+    }
+
+    private static void copyResource(InputStream input, File output) throws IOException {
+        try (InputStream in = input; OutputStream out = new FileOutputStream(output)) {
+            byte[] buffer = new byte[4096]; int read;
+            while ((read = in.read(buffer)) != -1) out.write(buffer, 0, read);
+        }
+    }
     
     public String loadScript(NeoBot plugin, String dir) {
         File scriptPath = new File(plugin.getDataFolder(), "scripts");
@@ -184,7 +256,7 @@ public class ScriptProvider {
         }
         JSONObject jsonObject = null;
         try {
-            jsonObject = new JSONObject(new String(Files.readAllBytes(manifest.toPath())));
+            jsonObject = new JSONObject(new String(Files.readAllBytes(manifest.toPath()), StandardCharsets.UTF_8));
         } catch (IOException e) {
             return plugin.getMessageConfig().getMessage("internal.script.load.error")
                     .replace("${error}", e.getMessage());
@@ -241,6 +313,17 @@ public class ScriptProvider {
     }
 
     public void loadScript(NeoBot plugin, Script script) throws Throwable {
+        Thread thread = Thread.currentThread();
+        ClassLoader originalContextClassLoader = thread.getContextClassLoader();
+        thread.setContextClassLoader(ScriptProvider.class.getClassLoader());
+        try {
+            loadScriptWithPluginClassLoader(plugin, script);
+        } finally {
+            thread.setContextClassLoader(originalContextClassLoader);
+        }
+    }
+
+    private void loadScriptWithPluginClassLoader(NeoBot plugin, Script script) throws Throwable {
         if (!script.getEntrypoint().exists()) {
             plugin.getNeoLogger().warn("The script " + script.getId() + " is missing the entrypoint file.");
         }
@@ -271,9 +354,11 @@ public class ScriptProvider {
         } else {
             contextBuilder.allowHostAccess(hostAccess);
         }
-        Context context = contextBuilder.build();
+        GraalScriptRuntime.requireJavaScript(engine);
+        Context context = GraalScriptRuntime.buildContext(contextBuilder);
         String uuid = UUID.randomUUID().toString();
         context.getBindings("js").putMember("qq", plugin.getBotProvider().getBotListener());
+        context.getBindings("js").putMember("discord", plugin.getBotProvider().getDiscordBotListener());
         context.getBindings("js").putMember("plugin", plugin);
         context.getBindings("js").putMember("gameEvent", plugin.getGameEventListener());
         context.getBindings("js").putMember("gameCommand", plugin.getCommandProvider());
@@ -282,6 +367,7 @@ public class ScriptProvider {
         context.getBindings("js").putMember("http", new HttpBuilder.Factory());
         context.getBindings("js").putMember("ws", new ExternalWSUtil());
         context.getBindings("js").putMember("scriptManager", this);
+        context.getBindings("js").putMember("business", actionExecutor);
         context.getBindings("js").putMember("__uuid__", uuid);
         contexts.put(script, context);
         context.eval("js", builder.toString());
@@ -306,6 +392,7 @@ public class ScriptProvider {
                 toRemove.forEach(methods::remove);
                 placeholderParsers.removeIf(method -> method.getScript().getId().equalsIgnoreCase(id));
                 plugin.getBotProvider().getBotListener().clearUuidContext(uuid);
+                plugin.getBotProvider().getDiscordBotListener().clearUuidContext(uuid);
                 plugin.getGameEventListener().clearUuidContext(uuid);
                 plugin.getCommandProvider().clearUuidContext(uuid);
                 plugin.getScriptScheduler().clearUuidContext(uuid);
@@ -321,6 +408,7 @@ public class ScriptProvider {
         contexts.clear();
         placeholderParsers.clear();
         methods.clear();
+        businessDispatcher.clearHandlers();
     }
 
     public void downloadDefault() {

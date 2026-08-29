@@ -22,11 +22,15 @@ import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.graalvm.polyglot.HostAccess;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Getter
 public class NeoBotBukkit extends JavaPlugin implements NeoBot {
+    private static final Pattern MINECRAFT_VERSION = Pattern.compile("(\\d+)\\.(\\d+)");
     private GameEventListener gameEventListener;
 
     @Setter
@@ -111,6 +115,15 @@ public class NeoBotBukkit extends JavaPlugin implements NeoBot {
 
     @Override
     public void onEnable() {
+        int[] version = parseMinecraftVersion(Bukkit.getBukkitVersion());
+        if (version[0] < 1 || (version[0] == 1 && version[1] < 8)) {
+            getLogger().severe("NeoBot requires Minecraft 1.8 or newer (detected "
+                    + Bukkit.getBukkitVersion() + ").");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return;
+        }
+        getLogger().info("Using the unified Bukkit compatibility layer for Minecraft "
+                + version[0] + "." + version[1] + ".");
         this.enable();
     }
 
@@ -214,5 +227,26 @@ public class NeoBotBukkit extends JavaPlugin implements NeoBot {
     @Override
     public String getBrand() {
         return Bukkit.getName();
+    }
+
+    /** Bukkit's plugin loader replaces a running plugin's jar with any same-named jar found under
+     *  plugins/update/ on the next server start, so the staging file must keep the original jar name. */
+    @Override
+    public File getUpdateStagingFile(String version) {
+        File pluginsFolder = getDataFolder().getParentFile();
+        if (pluginsFolder == null) return null;
+        return new File(new File(pluginsFolder, "update"), getFile().getName());
+    }
+
+    static int[] parseMinecraftVersion(String version) {
+        Matcher matcher = MINECRAFT_VERSION.matcher(version == null ? "" : version);
+        if (!matcher.find()) {
+            // Unknown future implementations should get a chance to load. The
+            // implementation uses only the stable Bukkit surface from 1.8.
+            return new int[]{Integer.MAX_VALUE, 0};
+        }
+        int major = Integer.parseInt(matcher.group(1));
+        int minor = Integer.parseInt(matcher.group(2));
+        return new int[]{major, minor};
     }
 }

@@ -63,18 +63,36 @@ public class GameEventListener {
 
     public void onJoin(PlayerEvent event) {
         fireEvent("JoinEvent", event);
+        dispatchPlayerStatus("PlayerJoinEvent", event);
     }
 
     public void onQuit(PlayerEvent event) {
         fireEvent("QuitEvent", event);
+        dispatchPlayerStatus("PlayerQuitEvent", event);
+    }
+
+    private void dispatchPlayerStatus(String eventName, PlayerEvent event) {
+        if (plugin.getScriptProvider() == null) {
+            plugin.getNeoLogger().warn(eventName + " rejected: script system is not loaded");
+            return;
+        }
+        dev.neovoxel.neobot.script.ScriptDispatchResult result = plugin.getScriptProvider().dispatchBusiness(eventName, event);
+        plugin.getScriptProvider().executeBusinessActions(result);
     }
 
     public void onDeath(DeathEvent event) {
         fireEvent("DeathEvent", event);
+        dispatchPlayerStatus("PlayerDeathEvent", event);
     }
 
     public void onChat(ChatEvent event) {
         fireEvent("ChatEvent", event);
+        if (plugin.getScriptProvider() == null) {
+            plugin.getNeoLogger().warn("MinecraftChatEvent rejected: script system is not loaded");
+            return;
+        }
+        dev.neovoxel.neobot.script.ScriptDispatchResult result = plugin.getScriptProvider().dispatchBusiness("MinecraftChatEvent", event);
+        plugin.getScriptProvider().executeBusinessActions(result);
     }
 
     public void onPluginEnable() {

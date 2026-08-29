@@ -22,8 +22,6 @@ import java.util.stream.Collectors;
 
 public class DataMigration {
     public static void migrate(NeoBot plugin, CommandSender sender) throws Throwable {
-        sender.sendMessage(plugin.getMessageConfig().getMessage("internal.migration.checking-libraries"));
-        MigrationUtil.loadLibrary();
         JSONObject config = MigrationUtil.parseOriginConfig(plugin, "config");
         if (config == null) {
             sender.sendMessage(plugin.getMessageConfig().getMessage("internal.migration.config-not-found")

@@ -118,6 +118,9 @@
         "not-found": "&c未找到该脚本!"
       }
     },
-    "no-permission": "&cYou don't have permission to do this!"
+    "no-permission": "&cYou don't have permission to do this!",
+    "update": {
+      "new-version-available": "&e发现 NeoBot 新版本 &b${latest}&e! (当前版本: &b${current}&e)"
+    }
   }
 }

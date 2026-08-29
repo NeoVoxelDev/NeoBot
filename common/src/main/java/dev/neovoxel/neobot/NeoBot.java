@@ -8,20 +8,19 @@ import dev.neovoxel.neobot.command.CommandProvider;
 import dev.neovoxel.neobot.config.ConfigProvider;
 import dev.neovoxel.neobot.game.GameEventListener;
 import dev.neovoxel.neobot.game.GameProvider;
-import dev.neovoxel.neobot.library.LibraryProvider;
 import dev.neovoxel.neobot.scheduler.SchedulerProvider;
 import dev.neovoxel.neobot.script.ScriptProvider;
 import dev.neovoxel.neobot.script.ScriptScheduler;
 import dev.neovoxel.neobot.storage.StorageProvider;
+import dev.neovoxel.neobot.discord.DiscordService;
+import dev.neovoxel.neobot.update.UpdateService;
 import org.graalvm.polyglot.HostAccess;
 
 import java.io.File;
 
-public interface NeoBot extends ConfigProvider, GameProvider, LibraryProvider, SchedulerProvider {
+public interface NeoBot extends ConfigProvider, GameProvider, SchedulerProvider {
     default void enable() {
         try {
-            getNeoLogger().info("Loading libraries...");
-            loadBasicLibrary(this);
             getNeoLogger().info("Loading config...");
             loadConfig(this);
             getNeoLogger().info("Loading storage...");
@@ -35,14 +34,24 @@ public interface NeoBot extends ConfigProvider, GameProvider, LibraryProvider, S
             BotProvider botProvider = new BotProvider(this);
             setBotProvider(botProvider);
             getBotProvider().loadBot(this);
+            getNeoLogger().info("Scheduling update checks...");
+            UpdateService updateService = new UpdateService(this);
+            long checkIntervalSeconds = Math.max(1, getGeneralConfig().getInt("repository.auto-update.check-interval-minutes")) * 60L;
+            submitAsync(updateService::checkForUpdate, 30, checkIntervalSeconds);
             getNeoLogger().info("Loading script system...");
             submitAsync(() -> {
                 try {
                     setScriptScheduler(new ScriptScheduler(this));
                     ScriptProvider scriptProvider = new ScriptProvider(this);
                     setScriptProvider(scriptProvider);
+                    scriptProvider.setBusinessActionExecutor(new dev.neovoxel.neobot.script.NeoBotBusinessActionExecutor(this));
                     getScriptProvider().loadScript(this);
                     getGameEventListener().onPluginEnable();
+                    if (!getBotProvider().awaitConnections(8000)) {
+                        getNeoLogger().warn("Bot connections not fully established after 8s; "
+                                + "server-start announcement may not reach every platform");
+                    }
+                    getDiscordService().notifyServerStarted();
                 } catch (Throwable e) {
                     getNeoLogger().error("Failed to load script system", e);
                 }
@@ -53,21 +62,24 @@ public interface NeoBot extends ConfigProvider, GameProvider, LibraryProvider, S
     }
     
     default void disable() {
-        getGameEventListener().onPluginDisable();
-        getGeneralConfig().flush(this);
-        getMessageConfig().flush(this);
-        getScriptConfig().flush(this);
+        // Bukkit calls disable even after a failed enable. Each subsystem is
+        // therefore optional until its initialization has completed.
+        if (getGameEventListener() != null) getGameEventListener().onPluginDisable();
+        if (getBotProvider() != null) getDiscordService().notifyServerStopping();
+        if (getGeneralConfig() != null) getGeneralConfig().flush(this);
+        if (getMessageConfig() != null) getMessageConfig().flush(this);
+        if (getScriptConfig() != null) getScriptConfig().flush(this);
         getNeoLogger().info("Unloading all scripts...");
-        getScriptProvider().unloadScript();
-        getBotProvider().getBotListener().reset();
-        getGameEventListener().reset();
+        if (getScriptProvider() != null) getScriptProvider().unloadScript();
+        if (getBotProvider() != null) getBotProvider().resetListeners();
+        if (getGameEventListener() != null) getGameEventListener().reset();
         getNeoLogger().info("Cancelling all the tasks...");
         cancelAllTasks();
-        getScriptScheduler().clear();
+        if (getScriptScheduler() != null) getScriptScheduler().clear();
         getNeoLogger().info("Disconnecting to the bot...");
-        getBotProvider().unloadBot();
+        if (getBotProvider() != null) getBotProvider().unloadBot();
         getNeoLogger().info("Saving data...");
-        getStorageProvider().closeStorage();
+        if (getStorageProvider() != null) getStorageProvider().closeStorage();
     }
 
     default void reload(CommandSender sender) {
@@ -76,17 +88,25 @@ public interface NeoBot extends ConfigProvider, GameProvider, LibraryProvider, S
         cancelAllTasks();
         getScriptScheduler().clear();
         getNeoLogger().info("Reloading config...");
-        reloadConfig(this);
+        try {
+            reloadConfig(this);
+        } catch (RuntimeException e) {
+            String message = e.getMessage() == null ? e.toString() : e.getMessage();
+            getNeoLogger().error("Config reload aborted; old configuration remains active", e);
+            if (sender != null) sender.sendMessage("&c配置文件 JSON 无效，已保留旧配置: " + message);
+            return;
+        }
         submitAsync(() -> {
             try {
                 getNeoLogger().info("Reloading bot...");
                 getBotProvider().reloadBot(this);
-                getBotProvider().getBotListener().reset();
+                getBotProvider().resetListeners();
                 getGameEventListener().reset();
                 getNeoLogger().info("Reloading scripts...");
                 getScriptProvider().unloadScript();
                 getScriptProvider().loadScript(this);
                 getGameEventListener().onPluginReloaded();
+                getNeoLogger().info("Script system reloaded successfully");
             } catch (Throwable e) {
                 getNeoLogger().error("Failed to reload scripts", e);
             }
@@ -106,6 +126,8 @@ public interface NeoBot extends ConfigProvider, GameProvider, LibraryProvider, S
     GameEventListener getGameEventListener();
 
     BotProvider getBotProvider();
+
+    default DiscordService getDiscordService() { return getBotProvider().getDiscordService(); }
 
     void setBotProvider(BotProvider botProvider);
 
@@ -144,4 +166,11 @@ public interface NeoBot extends ConfigProvider, GameProvider, LibraryProvider, S
     String getMinecraftVersion();
 
     String getBrand();
+
+    /** Where a downloaded update jar for the given version should be staged so the host platform picks
+     *  it up on next restart. Returns null on platforms that don't support staged updates, in which case
+     *  the auto-update download step is skipped (the new-version notice still fires normally). */
+    default File getUpdateStagingFile(String version) {
+        return null;
+    }
 }

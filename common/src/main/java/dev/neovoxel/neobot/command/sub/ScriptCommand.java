@@ -37,7 +37,7 @@ public class ScriptCommand {
         plugin.getNeoLogger().info("Reloading scripts...");
         plugin.getScriptScheduler().cancelAllTasks();
         plugin.getScriptProvider().setScriptSystemLoaded(false);
-        plugin.getBotProvider().getBotListener().reset();
+        plugin.getBotProvider().resetListeners();
         plugin.getGameEventListener().reset();
         plugin.getScriptProvider().unloadScript();
         try {

@@ -3,10 +3,12 @@ package dev.neovoxel.neobot.command;
 import dev.neovoxel.nbapi.client.NBotClient;
 import dev.neovoxel.nbapi.client.OBWSClient;
 import dev.neovoxel.nbapi.client.OBWSServer;
+import dev.neovoxel.nbapi.discord.client.DiscordClient;
 import dev.neovoxel.neobot.NeoBot;
 import dev.neovoxel.neobot.adapter.CommandSender;
 import dev.neovoxel.neobot.command.sub.RepositoryCommand;
 import dev.neovoxel.neobot.command.sub.ScriptCommand;
+import dev.neovoxel.neobot.command.sub.DiscordCommand;
 import dev.neovoxel.neobot.migrate.ConfigMigration;
 import dev.neovoxel.neobot.migrate.DataMigration;
 import dev.neovoxel.neobot.script.Script;
@@ -32,14 +34,28 @@ public abstract class CommandProvider {
 
     private final ScriptCommand scriptCommand;
     private final RepositoryCommand repositoryCommand;
+    private final DiscordCommand discordCommand;
 
     protected CommandProvider(NeoBot plugin) {
         this.plugin = plugin;
         this.scriptCommand = new ScriptCommand(plugin);
         this.repositoryCommand = new RepositoryCommand(plugin);
+        this.discordCommand = new DiscordCommand(plugin);
     }
 
     public abstract void registerCommand();
+
+    /** Renders the "internal.status.data.bot" template (already &-&gt;§ translated by
+     *  EnhancedConfig at load time) instead of hand-concatenating "&f  - &a..." strings,
+     *  which never get color-translated since they're built at runtime, not loaded from JSON. */
+    static String formatBotStatusLine(String template, String type, String connected) {
+        return template.replace("${type}", type).replace("${connected}", connected);
+    }
+
+    static String buildDiscordStatusText(boolean connected, String proxyMode, String channel) {
+        return (connected ? "在线" : "离线") + " (代理=" + proxyMode
+                + ", server-messages=" + (channel.trim().isEmpty() ? "未配置" : "已配置") + ")";
+    }
 
     public void onCommand(CommandSender sender, String[] args) {
         if (args.length == 0) {
@@ -47,7 +63,11 @@ public abstract class CommandProvider {
                 for (String message : plugin.getMessageConfig().getStringArray("internal.help")) {
                     sender.sendMessage(message);
                 }
+                sender.sendMessage("&a/neobot discord help   &b- Discord channel and account bindings");
             } else sender.sendMessage(plugin.getMessageConfig().getMessage("internal.no-permission"));
+            return;
+        } else if (args[0].equalsIgnoreCase("discord")) {
+            discordCommand.execute(sender, args);
             return;
         } else if (args.length == 1) {
             if (args[0].equalsIgnoreCase("help")) {
@@ -77,10 +97,11 @@ public abstract class CommandProvider {
                     sender.sendMessage(plugin.getMessageConfig().getMessage("internal.status.fetching"));
                     plugin.submitAsync(() -> {
                         boolean needGithubProxy = plugin.getGeneralConfig().getBoolean("repository.use-github-proxy");
+                        String githubProxy = plugin.getGeneralConfig().getString("repository.github-proxy-url");
                         String currentVersion = plugin.getVersion();
                         try {
-                            String latestVersion = HttpUtil.getLatestVersion(needGithubProxy);
-                            String latestCommit = HttpUtil.getLatestCommit(needGithubProxy);
+                            String latestVersion = HttpUtil.getLatestVersion(needGithubProxy, githubProxy);
+                            String latestCommit = HttpUtil.getLatestCommit(needGithubProxy, githubProxy);
                             sender.sendMessage(plugin.getMessageConfig().getMessage("internal.status.data.head"));
                             for (String message : plugin.getMessageConfig().getStringArray("internal.status.data.basic")) {
                                 message = message
@@ -101,6 +122,19 @@ public abstract class CommandProvider {
                                             .replace("${connected}", client.isConnected() ? "在线" : "离线"));
                                 }
                             }
+                            boolean discordEnabled = plugin.getGeneralConfig().has("bot.discord.enabled")
+                                    && plugin.getGeneralConfig().getBoolean("bot.discord.enabled");
+                            boolean discordConnected = discordEnabled
+                                    && !plugin.getBotProvider().getDiscordClients().isEmpty()
+                                    && plugin.getBotProvider().getDiscordClients().stream().anyMatch(DiscordClient::isConnected);
+                            String proxyMode = plugin.getGeneralConfig().has("bot.discord.proxy.mode")
+                                    ? plugin.getGeneralConfig().getString("bot.discord.proxy.mode") : "official";
+                            String channel = plugin.getGeneralConfig().has("bot.discord.channels.server-messages-channel-id")
+                                    ? plugin.getGeneralConfig().getString("bot.discord.channels.server-messages-channel-id") : "";
+                            sender.sendMessage(formatBotStatusLine(
+                                    plugin.getMessageConfig().getString("internal.status.data.bot"),
+                                    "discord",
+                                    buildDiscordStatusText(discordConnected, proxyMode, channel)));
                         } catch (IOException e) {
                             sender.sendMessage(plugin.getMessageConfig().getMessage("internal.status.error")
                                     .replace("${error}", e.toString()));
