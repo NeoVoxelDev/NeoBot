@@ -51,7 +51,8 @@
     },
     "account": {
       "require-binding": true,
-      "require-binding-message": "请绑定 QQ 或 Discord 账号后再进入服务器。"
+      "require-binding-message": "请绑定 QQ 或 Discord 账号后再进入服务器。",
+      "notify-bind-success": true
     },
     "discord": {
       "enabled": false,

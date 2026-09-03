@@ -70,6 +70,19 @@ class DefaultConfigJsonTest {
     }
 
     @Test
+    void defaultConfigEnablesNotifyBindSuccess() throws Exception {
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream("config.json")) {
+            assertNotNull(in);
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            byte[] buffer = new byte[1024]; int read;
+            while ((read = in.read(buffer)) != -1) bytes.write(buffer, 0, read);
+            JSONObject json = new JSONObject(new String(bytes.toByteArray(), StandardCharsets.UTF_8));
+            JSONObject account = json.getJSONObject("bot").getJSONObject("account");
+            assertTrue(account.getBoolean("notify-bind-success"));
+        }
+    }
+
+    @Test
     void defaultConfigContainsRemoteCommandResultFormatWithResultPlaceholder() throws Exception {
         try (InputStream in = getClass().getClassLoader().getResourceAsStream("config.json")) {
             assertNotNull(in);

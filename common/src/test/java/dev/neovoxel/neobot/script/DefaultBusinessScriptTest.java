@@ -304,6 +304,31 @@ class DefaultBusinessScriptTest {
     }
 
     @Test
+    void suppressesBindAndUnbindSuccessNotificationsButStillSendsFailuresWhenNotifyBindSuccessDisabled() {
+        business.notifyBindSuccess = false;
+
+        business.bindResult = "success";
+        Result bindSuccess = run("BindEvent", new InboundCommandContext("/bind Steve", "qq-user-1", "qq:555", "qq"));
+        assertTrue(bindSuccess.cancelled);
+        assertNull(bindSuccess.content);
+
+        business.unbindResult = "success";
+        Result unbindSuccess = run("UnbindEvent", new InboundCommandContext("/unbind Steve", "qq-user-1", "qq:555", "qq"));
+        assertTrue(unbindSuccess.cancelled);
+        assertNull(unbindSuccess.content);
+
+        business.bindResult = "error:already-bound-or-conflict";
+        Result bindFailure = run("BindEvent", new InboundCommandContext("/bind Steve", "qq-user-1", "qq:555", "qq"));
+        assertFalse(bindFailure.cancelled);
+        assertEquals("该账号已被绑定。", bindFailure.content);
+
+        business.unbindResult = "error:not-owner-or-unbound";
+        Result unbindFailure = run("UnbindEvent", new InboundCommandContext("/unbind Steve", "qq-user-1", "qq:555", "qq"));
+        assertFalse(unbindFailure.cancelled);
+        assertEquals("该账号未绑定。", unbindFailure.content);
+    }
+
+    @Test
     void malformedBindContentIsCancelledWithoutCallingBusiness() {
         Result result = run("BindEvent", new InboundCommandContext("/bind", "qq-user-1", "qq:555", "qq"));
         assertTrue(result.cancelled);
@@ -515,6 +540,7 @@ class DefaultBusinessScriptTest {
         String deathMessage = "[${server}] ${player} 逝世了!";
         boolean accountRequireBinding = false;
         String accountRequireBindingMessage = "Account binding required for ${player}";
+        boolean notifyBindSuccess = true;
         final java.util.Set<java.util.UUID> qqBoundUuids = new java.util.HashSet<>();
         final java.util.Set<java.util.UUID> discordBoundUuids = new java.util.HashSet<>();
 
@@ -544,6 +570,7 @@ class DefaultBusinessScriptTest {
         public String configuredDeathMessage() { return deathMessage; }
         public boolean configuredAccountRequireBinding() { return accountRequireBinding; }
         public String configuredAccountRequireBindingMessage() { return accountRequireBindingMessage; }
+        public boolean configuredNotifyBindSuccess() { return notifyBindSuccess; }
         public boolean hasQqBinding(java.util.UUID uuid) { return qqBoundUuids.contains(uuid); }
         public boolean hasDiscordBinding(java.util.UUID uuid) { return discordBoundUuids.contains(uuid); }
         public String bind(String playerName, String identity, String kind) {

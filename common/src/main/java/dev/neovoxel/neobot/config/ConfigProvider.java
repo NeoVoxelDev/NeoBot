@@ -69,6 +69,7 @@ public interface ConfigProvider {
             config.addOption("bot.player-status.death-message", "[${server}] ${player} 逝世了!");
             config.addOption("bot.account.require-binding", true);
             config.addOption("bot.account.require-binding-message", "请绑定 QQ 或 Discord 账号后再进入服务器。");
+            config.addOption("bot.account.notify-bind-success", true);
             config.addOption("bot.discord.chat.maximum-length", 1900);
             config.addOption("bot.discord.chat.ignore-self", true);
             config.addOption("bot.discord.chat.ignore-bots", true);

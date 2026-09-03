@@ -92,6 +92,7 @@ subprojects {
             exclude("META-INF/services/**")
             exclude("META-INF/versions/**")
             exclude("META-INF/*.SF", "META-INF/*.RSA", "META-INF/*.DSA")
+            exclude("META-INF/MANIFEST.MF")
             exclude("module-info.class")
         }
         into("META-INF/versions/9") {

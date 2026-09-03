@@ -198,6 +198,10 @@ public final class NeoBotBusinessActionExecutor implements BusinessActionExecuto
         return plugin.getGeneralConfig().has("bot.account.require-binding-message")
                 ? plugin.getGeneralConfig().getString("bot.account.require-binding-message") : "";
     }
+    @HostAccess.Export public boolean configuredNotifyBindSuccess() {
+        return !plugin.getGeneralConfig().has("bot.account.notify-bind-success")
+                || plugin.getGeneralConfig().getBoolean("bot.account.notify-bind-success");
+    }
     @HostAccess.Export public boolean hasQqBinding(java.util.UUID uuid) {
         dev.neovoxel.neobot.discord.model.DiscordAccountBinding binding = plugin.getDiscordService().account(uuid);
         return binding != null && binding.getQqUserId() != null && !binding.getQqUserId().isEmpty();

@@ -108,11 +108,15 @@ function bindResultText(result, isBind) {
     default: return "操作失败：" + result;
   }
 }
+function isSuccessResult(result) {
+  return result === "success" || result === "SUCCESS";
+}
 scriptManager.registerBusinessScript("BindEvent", function (event) {
   var parts = String(event.getContent() || "").trim().split(/\s+/);
   if (parts.length !== 2) return { handled: true, cancelled: true };
   var platform = event.getPlatform();
   var result = business.bind(parts[1], event.getUserId(), platform);
+  if (isSuccessResult(result) && !business.configuredNotifyBindSuccess()) return { handled: true, cancelled: true };
   var action = platform === "qq" ? "sendToQQ" : "sendToDiscord";
   return { handled: true, content: bindResultText(result, true), targets: [event.getReplyTarget()], actions: [action] };
 });
@@ -121,6 +125,7 @@ scriptManager.registerBusinessScript("UnbindEvent", function (event) {
   if (parts.length !== 2) return { handled: true, cancelled: true };
   var platform = event.getPlatform();
   var result = business.unbind(parts[1], event.getUserId(), platform);
+  if (isSuccessResult(result) && !business.configuredNotifyBindSuccess()) return { handled: true, cancelled: true };
   var action = platform === "qq" ? "sendToQQ" : "sendToDiscord";
   return { handled: true, content: bindResultText(result, false), targets: [event.getReplyTarget()], actions: [action] };
 });
