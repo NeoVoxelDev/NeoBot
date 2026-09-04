@@ -1,0 +1,19 @@
+{
+  "Group": "NeoVoxelDev",
+  "Name": "NeoBot",
+  "Version": "0.1",
+  "Description": "A bot plugin that connects Minecraft with QQ, Kook, Discord, etc.",
+  "Authors": [
+    {
+      "Name": "NeoVoxelDev Team",
+      "Url": "https://github.com/NeoVoxelDev"
+    }
+  ],
+  "Website": "https://github.com/NeoVoxelDev/NeoBot",
+  "ServerVersion": "*",
+  "Dependencies": {},
+  "OptionalDependencies": {},
+  "DisabledByDefault": false,
+  "Main": "dev.neovoxel.neobot.NeoBotHytale",
+  "IncludesAssetPack": false
+}

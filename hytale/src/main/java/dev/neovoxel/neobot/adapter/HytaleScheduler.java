@@ -1,0 +1,139 @@
+/*
+ * This file is part of NeoBot, licensed under the MIT License.
+ *
+ *  Copyright (c) lucko (Luck) <luck@lucko.me>
+ *  Copyright (c) contributors
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a copy
+ *  of this software and associated documentation files (the "Software"), to deal
+ *  in the Software without restriction, including without limitation the rights
+ *  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ *  copies of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included in all
+ *  copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ *  SOFTWARE.
+ */
+
+package dev.neovoxel.neobot.adapter;
+
+import com.hypixel.hytale.server.core.universe.Universe;
+import dev.neovoxel.neobot.NeoBotHytale;
+
+import java.lang.Thread.UncaughtExceptionHandler;
+import java.util.Arrays;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.ForkJoinWorkerThread;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+public class HytaleScheduler {
+    private static final int PARALLELISM = 16;
+    private final NeoBotHytale plugin;
+
+    private final ScheduledThreadPoolExecutor scheduler;
+    private final ForkJoinPool worker;
+
+    public HytaleScheduler(NeoBotHytale plugin) {
+        this.plugin = plugin;
+        this.scheduler = new ScheduledThreadPoolExecutor(1, r -> {
+            Thread thread = Executors.defaultThreadFactory().newThread(r);
+            thread.setName("neobot-scheduler");
+            return thread;
+        });
+        this.scheduler.setRemoveOnCancelPolicy(true);
+        this.scheduler.setExecuteExistingDelayedTasksAfterShutdownPolicy(false);
+        this.worker = new ForkJoinPool(PARALLELISM, new WorkerThreadFactory(), new ExceptionHandler(), false);
+    }
+
+    public ScheduledFuture<?> sync(Runnable task) {
+        return this.scheduler.schedule(() -> this.worker.execute(() -> Universe.get().getDefaultWorld().execute(task)), 0, TimeUnit.MILLISECONDS);
+//        return async(); // lucko: I think this is OK?
+    }
+
+    public ScheduledFuture<?> syncLater(Runnable task, long delay, TimeUnit unit) {
+        return this.scheduler.schedule(() -> this.worker.execute(() -> Universe.get().getDefaultWorld().execute(task)), delay, unit);
+    }
+
+    public ScheduledFuture<?> syncRepeating(Runnable task, long delay, long period, TimeUnit unit) {
+        return this.scheduler.scheduleAtFixedRate(() -> this.worker.execute(() -> Universe.get().getDefaultWorld().execute(task)), delay, period, unit);
+    }
+
+    public ScheduledFuture<?> async(Runnable task) {
+//        return this.worker;
+        return this.scheduler.schedule(() -> this.worker.execute(task), 0, TimeUnit.MILLISECONDS);
+    }
+
+    public ScheduledFuture<?> asyncLater(Runnable task, long delay, TimeUnit unit) {
+        return this.scheduler.schedule(() -> this.worker.execute(task), delay, unit);
+    }
+
+    public ScheduledFuture<?> asyncRepeating(Runnable task, long delay, long period, TimeUnit unit) {
+        return this.scheduler.scheduleAtFixedRate(() -> this.worker.execute(task), delay, period, unit);
+    }
+
+    public void shutdownScheduler() {
+        this.scheduler.shutdown();
+        try {
+            if (!this.scheduler.awaitTermination(1, TimeUnit.MINUTES)) {
+                plugin.getNeoLogger().error("Timed out waiting for the NeoBot scheduler to terminate");
+                reportRunningTasks(thread -> thread.getName().equals("neobot-scheduler"));
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void shutdownExecutor() {
+        this.worker.shutdown();
+        try {
+            if (!this.worker.awaitTermination(1, TimeUnit.MINUTES)) {
+                plugin.getNeoLogger().error("Timed out waiting for the NeoBot worker thread pool to terminate");
+                reportRunningTasks(thread -> thread.getName().startsWith("neobot-worker-"));
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void reportRunningTasks(Predicate<Thread> predicate) {
+        Thread.getAllStackTraces().forEach((thread, stack) -> {
+            if (predicate.test(thread)) {
+                plugin.getNeoLogger().warn("Thread " + thread.getName() + " is blocked, and may be the reason for the slow shutdown!\n" +
+                        Arrays.stream(stack).map(el -> "  " + el).collect(Collectors.joining("\n"))
+                );
+            }
+        });
+    }
+
+    private static final class WorkerThreadFactory implements ForkJoinPool.ForkJoinWorkerThreadFactory {
+        private static final AtomicInteger COUNT = new AtomicInteger(0);
+
+        public ForkJoinWorkerThread newThread(ForkJoinPool pool) {
+            ForkJoinWorkerThread thread = ForkJoinPool.defaultForkJoinWorkerThreadFactory.newThread(pool);
+            thread.setDaemon(true);
+            thread.setName("neobot-worker-" + COUNT.getAndIncrement());
+            return thread;
+        }
+    }
+
+    private final class ExceptionHandler implements UncaughtExceptionHandler {
+        public void uncaughtException(Thread t, Throwable e) {
+            HytaleScheduler.this.plugin.getNeoLogger().warn("Thread " + t.getName() + " threw an uncaught exception");
+            e.printStackTrace();
+        }
+    }
+}
